@@ -1,7 +1,7 @@
 export type InventoryItem = {
   id: string;
   name: string;
-  sku: string;
+  unit: string;
   quantity: number;
   category: string;
   supplier: string;

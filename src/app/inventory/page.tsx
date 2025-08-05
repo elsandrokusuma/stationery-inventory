@@ -56,7 +56,7 @@ export default function InventoryPage() {
     const newItem: InventoryItem = {
       id: (items.length + 1).toString(),
       name: formData.get("name") as string,
-      sku: formData.get("sku") as string,
+      unit: formData.get("unit") as string,
       quantity: Number(formData.get("quantity")),
       category: formData.get("category") as string,
       supplier: formData.get("supplier") as string,
@@ -135,8 +135,8 @@ export default function InventoryPage() {
                 <Input id="name" name="name" className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="sku" className="text-right">SKU</Label>
-                <Input id="sku" name="sku" className="col-span-3" required />
+                <Label htmlFor="unit" className="text-right">Unit</Label>
+                <Input id="unit" name="unit" className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="quantity" className="text-right">Quantity</Label>
@@ -162,7 +162,7 @@ export default function InventoryPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
+              <TableHead>Unit</TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
               <TableHead>Category</TableHead>
@@ -175,7 +175,7 @@ export default function InventoryPage() {
             {items.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.sku}</TableCell>
+                <TableCell>{item.unit}</TableCell>
                 <TableCell className="text-center">
                   <Badge
                     variant={item.quantity > 50 ? "default" : item.quantity > 0 ? "outline" : "destructive"}
