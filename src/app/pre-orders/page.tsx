@@ -175,19 +175,30 @@ export default function PreOrdersPage() {
       toast({
         variant: "destructive",
         title: "No items selected",
-        description: "Please select one or more items to export.",
+        description: "Please select one or more approved items to export.",
       });
       return;
     }
-    toast({
-      title: "Exporting to PDF",
-      description: `${selectedRows.length} item(s) are being exported to PDF. This is a placeholder action.`,
-    });
+    const selectedApprovedRows = preOrders.filter(order => selectedRows.includes(order.id) && order.status === 'Approved');
+     if (selectedApprovedRows.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No approved items selected",
+        description: "Only approved pre-orders can be exported to a delivery order.",
+      });
+      return;
+    }
+    
+    const ids = selectedApprovedRows.map(o => o.id).join(',');
+    router.push(`/surat-jalan?ids=${ids}`);
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRows(filteredPreOrders.filter(o => o.status === 'Pending').map(order => order.id));
+      const selectableRows = filteredPreOrders
+        .filter(o => o.status === 'Pending' || o.status === 'Approved')
+        .map(order => order.id);
+      setSelectedRows(selectableRows);
     } else {
       setSelectedRows([]);
     }
@@ -205,7 +216,8 @@ export default function PreOrdersPage() {
     return statusMatch && dateMatch;
   });
   
-  const isAllSelected = selectedRows.length > 0 && filteredPreOrders.filter(o => o.status === 'Pending').length > 0 && selectedRows.length === filteredPreOrders.filter(o => o.status === 'Pending').length;
+  const selectableRowCount = filteredPreOrders.filter(o => o.status === 'Pending' || o.status === 'Approved').length;
+  const isAllSelected = selectedRows.length > 0 && selectableRowCount > 0 && selectedRows.length === selectableRowCount;
   const canRequestApproval = selectedRows.some(id => preOrders.find(o => o.id === id)?.status === 'Pending');
   const canExport = selectedRows.length > 0;
 
@@ -322,7 +334,7 @@ export default function PreOrdersPage() {
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                     aria-label="Select all"
-                    disabled={filteredPreOrders.filter(o => o.status === 'Pending').length === 0}
+                    disabled={selectableRowCount === 0}
                   />
               </TableHead>
               <TableHead>Item Name</TableHead>
@@ -343,7 +355,7 @@ export default function PreOrdersPage() {
                       checked={selectedRows.includes(order.id)}
                       onCheckedChange={() => handleSelectRow(order.id)}
                       aria-label="Select row"
-                      disabled={order.status !== 'Pending'}
+                      disabled={order.status !== 'Pending' && order.status !== 'Approved'}
                     />
                 </TableCell>
                 <TableCell className="font-medium">{order.itemName}</TableCell>
