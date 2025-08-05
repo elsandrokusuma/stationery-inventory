@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,37 +12,67 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { getStockPrediction } from "./actions";
 import type { PredictStockNeedsOutput } from "@/ai/flows/predict-stock-needs";
 import { Loader2, Sparkles, BarChart, CheckCircle } from "lucide-react";
-import { inventoryItems, preOrders as mockPreOrders } from "@/lib/placeholder-data";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { InventoryItem, PreOrder } from "@/lib/types";
 
 const formSchema = z.object({
   historicalData: z.string().min(10, "Please provide more historical data."),
   preOrders: z.string().min(10, "Please provide more pre-order data."),
 });
 
-// Prepare placeholder data for the text areas
-const historicalDataPlaceholder = JSON.stringify(
-  inventoryItems.map(({ name, quantity, lastUpdated }) => ({ name, quantity, lastUpdated })),
-  null,
-  2
-);
-const preOrdersPlaceholder = JSON.stringify(
-  mockPreOrders.map(({ itemName, quantity, expectedDate, status }) => ({ itemName, quantity, expectedDate, status })),
-  null,
-  2
-);
+const INVENTORY_STORAGE_KEY = "stockpilot-inventory";
+const PREORDERS_STORAGE_KEY = "stockpilot-preorders";
 
 export default function PredictPage() {
   const [prediction, setPrediction] = useState<PredictStockNeedsOutput | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [historicalData, setHistoricalData] = useState("[]");
+  const [preOrderData, setPreOrderData] = useState("[]");
+
+  useEffect(() => {
+    try {
+      const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+      if (storedInventory) {
+        const items: InventoryItem[] = JSON.parse(storedInventory);
+        const historical = items.map(({ name, quantity }) => ({ name, quantity }));
+        setHistoricalData(JSON.stringify(historical, null, 2));
+      }
+
+      const storedPreOrders = localStorage.getItem(PREORDERS_STORAGE_KEY);
+      if (storedPreOrders) {
+        const orders: PreOrder[] = JSON.parse(storedPreOrders);
+        const preOrders = orders.map(({ itemName, quantity, expectedDate, status }) => ({
+          itemName,
+          quantity,
+          expectedDate,
+          status,
+        }));
+        setPreOrderData(JSON.stringify(preOrders, null, 2));
+      }
+    } catch (error) {
+        console.error("Failed to load data from localStorage", error);
+    }
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      historicalData: historicalDataPlaceholder,
-      preOrders: preOrdersPlaceholder,
+    values: {
+      historicalData: historicalData,
+      preOrders: preOrderData,
+    },
+    // The form is re-initialized when the `values` prop changes.
+    // This is necessary because `historicalData` and `preOrderData` are loaded asynchronously.
+    resetOptions: {
+      keepDirtyValues: true,
     },
   });
+
+   useEffect(() => {
+    form.reset({
+      historicalData: historicalData,
+      preOrders: preOrderData,
+    });
+  }, [historicalData, preOrderData, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     startTransition(async () => {
