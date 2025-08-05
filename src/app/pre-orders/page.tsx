@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, MoreHorizontal, FileDown, Calendar as CalendarIcon, X } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Send, Calendar as CalendarIcon, X } from "lucide-react";
 import { preOrders as initialPreOrders, inventoryItems } from "@/lib/placeholder-data";
 import type { PreOrder } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +45,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+
+const APPROVAL_STORAGE_KEY = "stockpilot-pending-approvals";
 
 export default function PreOrdersPage() {
   const [preOrders, setPreOrders] = React.useState<PreOrder[]>(initialPreOrders);
@@ -89,9 +91,45 @@ export default function PreOrdersPage() {
     });
   };
 
+  const handleRequestApproval = () => {
+    const itemsToApprove = preOrders.filter(order => selectedRows.includes(order.id) && order.status === 'Pending');
+    if (itemsToApprove.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'No items to send',
+        description: 'Please select pending pre-orders to request approval.',
+      });
+      return;
+    }
+
+    try {
+      const existingApprovals: PreOrder[] = JSON.parse(localStorage.getItem(APPROVAL_STORAGE_KEY) || '[]');
+      const newApprovals = [...existingApprovals, ...itemsToApprove];
+      localStorage.setItem(APPROVAL_STORAGE_KEY, JSON.stringify(newApprovals));
+      
+      setPreOrders(preOrders.map(order =>
+        itemsToApprove.some(item => item.id === order.id)
+          ? { ...order, status: 'Awaiting Approval' }
+          : order
+      ));
+      
+      setSelectedRows([]);
+      toast({
+        title: 'Approval Requested',
+        description: `${itemsToApprove.length} pre-order(s) have been sent for approval.`,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to save approvals',
+        description: 'Could not save approval requests to local storage.',
+      });
+    }
+  };
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRows(filteredPreOrders.map(order => order.id));
+      setSelectedRows(filteredPreOrders.filter(o => o.status === 'Pending').map(order => order.id));
     } else {
       setSelectedRows([]);
     }
@@ -109,7 +147,8 @@ export default function PreOrdersPage() {
     return statusMatch && dateMatch;
   });
   
-  const isAllSelected = selectedRows.length > 0 && selectedRows.length === filteredPreOrders.length;
+  const isAllSelected = selectedRows.length > 0 && selectedRows.length === filteredPreOrders.filter(o => o.status === 'Pending').length;
+  const canRequestApproval = selectedRows.some(id => preOrders.find(o => o.id === id)?.status === 'Pending');
 
   return (
     <div className="flex flex-col gap-8">
@@ -128,6 +167,7 @@ export default function PreOrdersPage() {
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Awaiting Approval">Awaiting Approval</SelectItem>
               <SelectItem value="Fulfilled">Fulfilled</SelectItem>
               <SelectItem value="Cancelled">Cancelled</SelectItem>
             </SelectContent>
@@ -158,9 +198,9 @@ export default function PreOrdersPage() {
             </Button>
           )}
 
-          <Button disabled={selectedRows.length === 0}>
-            <FileDown className="mr-2 h-4 w-4" />
-            Export Selected
+          <Button onClick={handleRequestApproval} disabled={!canRequestApproval}>
+            <Send className="mr-2 h-4 w-4" />
+            Request Approval
           </Button>
           <Dialog open={isCreateOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
@@ -237,6 +277,7 @@ export default function PreOrdersPage() {
                       checked={selectedRows.includes(order.id)}
                       onCheckedChange={() => handleSelectRow(order.id)}
                       aria-label="Select row"
+                      disabled={order.status !== 'Pending'}
                     />
                 </TableCell>
                 <TableCell className="font-medium">{order.itemName}</TableCell>
@@ -245,7 +286,12 @@ export default function PreOrdersPage() {
                 <TableCell>{new Date(order.expectedDate).toLocaleDateString()}</TableCell>
                 <TableCell className="text-center">
                   <Badge
-                    variant={order.status === 'Fulfilled' ? 'default' : order.status === 'Pending' ? 'outline' : 'secondary'}
+                    variant={
+                      order.status === 'Fulfilled' ? 'default' :
+                      order.status === 'Pending' ? 'outline' :
+                      order.status === 'Awaiting Approval' ? 'warning' :
+                      'secondary'
+                    }
                   >
                     {order.status}
                   </Badge>
