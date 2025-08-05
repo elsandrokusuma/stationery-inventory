@@ -3,7 +3,6 @@ export type InventoryItem = {
   name: string;
   unit: string;
   quantity: number;
-  category: string;
   supplier: string;
   lastUpdated: string;
 };

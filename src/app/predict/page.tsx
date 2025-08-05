@@ -21,7 +21,7 @@ const formSchema = z.object({
 
 // Prepare placeholder data for the text areas
 const historicalDataPlaceholder = JSON.stringify(
-  inventoryItems.map(({ name, quantity, category, lastUpdated }) => ({ name, quantity, category, lastUpdated })),
+  inventoryItems.map(({ name, quantity, lastUpdated }) => ({ name, quantity, lastUpdated })),
   null,
   2
 );
@@ -144,15 +144,12 @@ export default function PredictPage() {
                         This prediction is based on the data provided. More data improves accuracy.
                       </AlertDescription>
                     </Alert>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-green-500" /> Suggested Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap">{prediction.suggestedActions}</p>
+                    <Alert className="mt-4">
+                      <AlertTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Suggested Actions</AlertTitle>
+                      <AlertDescription>
+                         <p className="whitespace-pre-wrap">{prediction.suggestedActions}</p>
+                      </AlertDescription>
+                    </Alert>
                 </CardContent>
               </Card>
             </>

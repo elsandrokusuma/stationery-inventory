@@ -58,7 +58,6 @@ export default function InventoryPage() {
       name: formData.get("name") as string,
       unit: formData.get("unit") as string,
       quantity: Number(formData.get("quantity")),
-      category: formData.get("category") as string,
       supplier: formData.get("supplier") as string,
       lastUpdated: new Date().toISOString().split("T")[0],
     };
@@ -142,10 +141,6 @@ export default function InventoryPage() {
                 <Label htmlFor="quantity" className="text-right">Quantity</Label>
                 <Input id="quantity" name="quantity" type="number" className="col-span-3" required />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">Category</Label>
-                <Input id="category" name="category" className="col-span-3" required />
-              </div>
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="supplier" className="text-right">Supplier</Label>
                 <Input id="supplier" name="supplier" className="col-span-3" required />
@@ -165,7 +160,6 @@ export default function InventoryPage() {
               <TableHead>Unit</TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
-              <TableHead>Category</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -184,7 +178,6 @@ export default function InventoryPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">{item.quantity}</TableCell>
-                <TableCell>{item.category}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
