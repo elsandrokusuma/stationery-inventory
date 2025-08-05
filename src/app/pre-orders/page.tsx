@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -29,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, MoreHorizontal, Send, Calendar as CalendarIcon, X } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Send, Calendar as CalendarIcon, X, FileDown } from "lucide-react";
 import { preOrders as initialPreOrders, inventoryItems } from "@/lib/placeholder-data";
 import type { PreOrder } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -126,6 +127,21 @@ export default function PreOrdersPage() {
       });
     }
   };
+  
+  const handleExportPdf = () => {
+    if (selectedRows.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No items selected",
+        description: "Please select one or more items to export.",
+      });
+      return;
+    }
+    toast({
+      title: "Exporting to PDF",
+      description: `${selectedRows.length} item(s) are being exported to PDF. This is a placeholder action.`,
+    });
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -149,6 +165,7 @@ export default function PreOrdersPage() {
   
   const isAllSelected = selectedRows.length > 0 && selectedRows.length === filteredPreOrders.filter(o => o.status === 'Pending').length;
   const canRequestApproval = selectedRows.some(id => preOrders.find(o => o.id === id)?.status === 'Pending');
+  const canExport = selectedRows.length > 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -201,6 +218,10 @@ export default function PreOrdersPage() {
           <Button onClick={handleRequestApproval} disabled={!canRequestApproval}>
             <Send className="mr-2 h-4 w-4" />
             Request Approval
+          </Button>
+           <Button onClick={handleExportPdf} disabled={!canExport}>
+            <FileDown className="mr-2 h-4 w-4" />
+            Export PDF
           </Button>
           <Dialog open={isCreateOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
@@ -277,7 +298,6 @@ export default function PreOrdersPage() {
                       checked={selectedRows.includes(order.id)}
                       onCheckedChange={() => handleSelectRow(order.id)}
                       aria-label="Select row"
-                      disabled={order.status !== 'Pending'}
                     />
                 </TableCell>
                 <TableCell className="font-medium">{order.itemName}</TableCell>
