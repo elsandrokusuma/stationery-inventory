@@ -227,6 +227,8 @@ export default function PreOrdersPage() {
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="Pending">Pending</SelectItem>
               <SelectItem value="Awaiting Approval">Awaiting Approval</SelectItem>
+              <SelectItem value="Approved">Approved</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
               <SelectItem value="Fulfilled">Fulfilled</SelectItem>
               <SelectItem value="Cancelled">Cancelled</SelectItem>
             </SelectContent>
@@ -352,8 +354,10 @@ export default function PreOrdersPage() {
                   <Badge
                     variant={
                       order.status === 'Fulfilled' ? 'default' :
+                      order.status === 'Approved' ? 'default' :
                       order.status === 'Pending' ? 'outline' :
                       order.status === 'Awaiting Approval' ? 'warning' :
+                      order.status === 'Rejected' ? 'destructive' :
                       'secondary'
                     }
                   >
@@ -363,7 +367,7 @@ export default function PreOrdersPage() {
                 <TableCell>
                    <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost" disabled={order.status !== 'Pending'}>
+                      <Button aria-haspopup="true" size="icon" variant="ghost" disabled={order.status !== 'Approved'}>
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Toggle menu</span>
                       </Button>

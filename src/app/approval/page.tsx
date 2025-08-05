@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -17,10 +18,12 @@ import type { PreOrder } from "@/lib/types";
 import { Check, X } from "lucide-react";
 
 const APPROVAL_STORAGE_KEY = "stationery-inventory-pending-approvals";
+const PREORDERS_STORAGE_KEY = "stationery-inventory-preorders";
 
 export default function ApprovalPage() {
   const [approvalItems, setApprovalItems] = React.useState<PreOrder[]>([]);
   const { toast } = useToast();
+  const router = useRouter();
 
   React.useEffect(() => {
     try {
@@ -33,24 +36,43 @@ export default function ApprovalPage() {
     }
   }, []);
 
-  const updateLocalStorage = (updatedItems: PreOrder[]) => {
-    localStorage.setItem(APPROVAL_STORAGE_KEY, JSON.stringify(updatedItems));
-  };
-
   const handleDecision = (orderId: string, decision: "approved" | "rejected") => {
-    const updatedItems = approvalItems.filter((item) => item.id !== orderId);
-    setApprovalItems(updatedItems);
-    updateLocalStorage(updatedItems);
+    const originalOrder = approvalItems.find((item) => item.id === orderId);
+    if (!originalOrder) return;
 
-    // In a real app, you would also update the status on the main pre-orders page,
-    // possibly via a shared state or by refetching data.
-    // For this prototype, we just show a toast message.
+    // Remove from approval queue
+    const updatedApprovalItems = approvalItems.filter((item) => item.id !== orderId);
+    setApprovalItems(updatedApprovalItems);
+    localStorage.setItem(APPROVAL_STORAGE_KEY, JSON.stringify(updatedApprovalItems));
+
+    // Update status in main pre-orders list
+    try {
+        const allPreOrders: PreOrder[] = JSON.parse(localStorage.getItem(PREORDERS_STORAGE_KEY) || '[]');
+        const updatedPreOrders = allPreOrders.map(order => {
+            if (order.id === orderId) {
+                return { ...order, status: decision === 'approved' ? 'Approved' : 'Rejected' };
+            }
+            return order;
+        });
+        localStorage.setItem(PREORDERS_STORAGE_KEY, JSON.stringify(updatedPreOrders));
+    } catch (error) {
+        console.error("Failed to update pre-orders in localStorage", error);
+        toast({
+            variant: "destructive",
+            title: "Error updating pre-order status",
+        });
+        return;
+    }
     
-    const originalOrder = approvalItems.find(item => item.id === orderId);
     toast({
       title: `Pre-Order ${decision}`,
-      description: `The pre-order for ${originalOrder?.itemName} has been ${decision}.`,
+      description: `The pre-order for ${originalOrder.itemName} has been ${decision}.`,
     });
+
+    // If no more items to approve, redirect back
+    if (updatedApprovalItems.length === 0) {
+        router.push('/pre-orders');
+    }
   };
 
   return (
@@ -111,7 +133,7 @@ export default function ApprovalPage() {
           </Table>
         </Card>
       ) : (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm py-24">
           <div className="flex flex-col items-center gap-1 text-center">
             <h3 className="text-2xl font-bold tracking-tight">
               No pending approvals

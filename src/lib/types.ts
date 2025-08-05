@@ -23,5 +23,5 @@ export type PreOrder = {
   quantity: number;
   orderDate: string;
   expectedDate: string;
-  status: 'Pending' | 'Awaiting Approval' | 'Fulfilled' | 'Cancelled';
+  status: 'Pending' | 'Awaiting Approval' | 'Approved' | 'Rejected' | 'Fulfilled' | 'Cancelled';
 };
