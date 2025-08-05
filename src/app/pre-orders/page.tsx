@@ -106,6 +106,7 @@ export default function PreOrdersPage() {
       id: `po${Date.now()}`,
       itemId: selectedItem.id,
       itemName: selectedItem.name,
+      unit: selectedItem.unit,
       quantity: Number(formData.get("quantity")),
       orderDate: new Date().toISOString(),
       expectedDate: new Date(formData.get("expectedDate") as string).toISOString(),
@@ -338,6 +339,7 @@ export default function PreOrdersPage() {
                   />
               </TableHead>
               <TableHead>Item Name</TableHead>
+              <TableHead>Unit</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
               <TableHead>Order Date</TableHead>
               <TableHead>Expected Date</TableHead>
@@ -359,6 +361,7 @@ export default function PreOrdersPage() {
                     />
                 </TableCell>
                 <TableCell className="font-medium">{order.itemName}</TableCell>
+                <TableCell>{order.unit}</TableCell>
                 <TableCell className="text-right">{order.quantity}</TableCell>
                 <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
                 <TableCell>{new Date(order.expectedDate).toLocaleDateString()}</TableCell>

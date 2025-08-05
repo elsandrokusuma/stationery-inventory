@@ -118,8 +118,8 @@ export default function SuratJalanPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60%]">Nama Barang</TableHead>
+                    <TableHead>Unit</TableHead>
                     <TableHead className="text-right">Jumlah</TableHead>
-                    <TableHead>Satuan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -128,11 +128,9 @@ export default function SuratJalanPage() {
                       <TableCell className="font-medium">
                         {order.itemName}
                       </TableCell>
+                      <TableCell>{order.unit}</TableCell>
                       <TableCell className="text-right">
                         {order.quantity}
-                      </TableCell>
-                       <TableCell>
-                        Pcs
                       </TableCell>
                     </TableRow>
                   ))}
