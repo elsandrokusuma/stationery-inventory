@@ -23,6 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   PlusCircle,
   ArrowDownCircle,
   ArrowUpCircle,
@@ -51,6 +58,8 @@ export default function InventoryPage() {
     null
   );
   const { toast } = useToast();
+  const [selectedUnit, setSelectedUnit] = React.useState<string | undefined>();
+
 
   const handleAddItem = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,7 +67,7 @@ export default function InventoryPage() {
     const newItem: InventoryItem = {
       id: (items.length + 1).toString(),
       name: formData.get("name") as string,
-      unit: formData.get("unit") as string,
+      unit: selectedUnit || (formData.get("unit") as string),
       quantity: Number(formData.get("quantity")),
       supplier: formData.get("supplier") as string,
       lastUpdated: new Date().toISOString().split("T")[0],
@@ -69,6 +78,7 @@ export default function InventoryPage() {
       description: `${newItem.name} has been added to inventory.`,
     });
     setAddOpen(false);
+    setSelectedUnit(undefined);
   };
 
   const handleStockUpdate = (type: "in" | "out") => (e: React.FormEvent<HTMLFormElement>) => {
@@ -152,7 +162,23 @@ export default function InventoryPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="unit" className="text-right">Unit</Label>
-                  <Input id="unit" name="unit" className="col-span-3" required />
+                  <Select name="unit" required onValueChange={setSelectedUnit}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pcs">Pcs</SelectItem>
+                      <SelectItem value="Pack">Pack</SelectItem>
+                      <SelectItem value="Box">Box</SelectItem>
+                      <SelectItem value="Roll">Roll</SelectItem>
+                      <SelectItem value="Rim">Rim</SelectItem>
+                      <SelectItem value="Tube">Tube</SelectItem>
+                      <SelectItem value="Bottle">Bottle</SelectItem>
+                      <SelectItem value="Can">Can</SelectItem>
+                      <SelectItem value="Sheet">Sheet</SelectItem>
+                      <SelectItem value="Cartridge">Cartridge</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="quantity" className="text-right">Quantity</Label>
