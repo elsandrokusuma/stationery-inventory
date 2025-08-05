@@ -24,6 +24,7 @@ import {
   Warehouse,
   UserCircle,
   Settings,
+  ClipboardCheck,
 } from "lucide-react"
 
 export function AppSidebar() {
@@ -77,6 +78,18 @@ export function AppSidebar() {
               <Link href="/pre-orders">
                 <ShoppingCart />
                 <span>Pre-Orders</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive("/approval")}
+              tooltip={{ children: "Approval" }}
+            >
+              <Link href="/approval">
+                <ClipboardCheck />
+                <span>Approval</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
