@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -56,6 +57,8 @@ export default function PreOrdersPage() {
   const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [dateFilter, setDateFilter] = React.useState<Date | undefined>(undefined);
+  const router = useRouter();
+
 
   const handleCreatePreOrder = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -119,6 +122,7 @@ export default function PreOrdersPage() {
         title: 'Approval Requested',
         description: `${itemsToApprove.length} pre-order(s) have been sent for approval.`,
       });
+      router.push('/approval');
     } catch (error) {
       toast({
         variant: 'destructive',
