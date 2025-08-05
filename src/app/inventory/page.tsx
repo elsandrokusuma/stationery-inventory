@@ -62,8 +62,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
 
-const INVENTORY_STORAGE_KEY = "stockpilot-inventory";
-const TRANSACTIONS_STORAGE_KEY = "stockpilot-transactions";
+const INVENTORY_STORAGE_KEY = "stationery-inventory-inventory";
+const TRANSACTIONS_STORAGE_KEY = "stationery-inventory-transactions";
 
 
 export default function InventoryPage() {

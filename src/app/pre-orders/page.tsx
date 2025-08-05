@@ -48,9 +48,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
-const APPROVAL_STORAGE_KEY = "stockpilot-pending-approvals";
-const PREORDERS_STORAGE_KEY = "stockpilot-preorders";
-const INVENTORY_STORAGE_KEY = "stockpilot-inventory";
+
+const APPROVAL_STORAGE_KEY = "stationery-inventory-pending-approvals";
+const PREORDERS_STORAGE_KEY = "stationery-inventory-preorders";
+const INVENTORY_STORAGE_KEY = "stationery-inventory-inventory";
 
 
 export default function PreOrdersPage() {
@@ -77,6 +78,7 @@ export default function PreOrdersPage() {
       if (storedInventory) {
         setInventoryItems(JSON.parse(storedInventory));
       } else {
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(initialInventoryItems));
         setInventoryItems(initialInventoryItems);
       }
     } catch (error) {
@@ -381,5 +383,3 @@ export default function PreOrdersPage() {
     </div>
   );
 }
-
-    

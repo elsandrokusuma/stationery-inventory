@@ -40,7 +40,7 @@ export function AppSidebar() {
               <Warehouse className="size-5" />
             </Link>
           </Button>
-          <span className="font-semibold text-lg">StockPilot</span>
+          <span className="font-semibold text-lg">Stationery Inventory</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">

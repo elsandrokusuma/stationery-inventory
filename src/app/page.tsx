@@ -25,9 +25,9 @@ import type { InventoryItem, Transaction, PreOrder } from "@/lib/types"
 import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ShoppingCart } from "lucide-react"
 import { useState, useEffect } from "react"
 
-const INVENTORY_STORAGE_KEY = "stockpilot-inventory";
-const TRANSACTIONS_STORAGE_KEY = "stockpilot-transactions";
-const PREORDERS_STORAGE_KEY = "stockpilot-preorders";
+const INVENTORY_STORAGE_KEY = "stationery-inventory-inventory";
+const TRANSACTIONS_STORAGE_KEY = "stationery-inventory-transactions";
+const PREORDERS_STORAGE_KEY = "stationery-inventory-preorders";
 
 const chartConfig = {
   quantity: {
@@ -64,7 +64,7 @@ export default function DashboardPage() {
       <header className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome to StockPilot, your inventory command center.</p>
+          <p className="text-muted-foreground">Welcome to Stationery Inventory, your inventory command center.</p>
         </div>
       </header>
 

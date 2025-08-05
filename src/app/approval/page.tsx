@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { PreOrder } from "@/lib/types";
 import { Check, X } from "lucide-react";
 
-const APPROVAL_STORAGE_KEY = "stockpilot-pending-approvals";
+const APPROVAL_STORAGE_KEY = "stationery-inventory-pending-approvals";
 
 export default function ApprovalPage() {
   const [approvalItems, setApprovalItems] = React.useState<PreOrder[]>([]);
