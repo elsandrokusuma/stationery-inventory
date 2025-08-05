@@ -69,7 +69,6 @@ export default function InventoryPage() {
       name: formData.get("name") as string,
       unit: selectedUnit || (formData.get("unit") as string),
       quantity: Number(formData.get("quantity")),
-      supplier: formData.get("supplier") as string,
       lastUpdated: new Date().toISOString().split("T")[0],
     };
     setItems([...items, newItem]);
@@ -184,10 +183,6 @@ export default function InventoryPage() {
                   <Label htmlFor="quantity" className="text-right">Quantity</Label>
                   <Input id="quantity" name="quantity" type="number" className="col-span-3" required />
                 </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="supplier" className="text-right">Supplier</Label>
-                  <Input id="supplier" name="supplier" className="col-span-3" required />
-                </div>
                 <DialogFooter>
                   <Button type="submit">Save Item</Button>
                 </DialogFooter>
@@ -270,10 +265,6 @@ export default function InventoryPage() {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">Quantity</Label>
               <Input id="quantity" name="quantity" type="number" className="col-span-3" required min="1" />
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="supplier" className="text-right">Supplier</Label>
-              <Input id="supplier" name="supplier" defaultValue={selectedItem?.supplier} className="col-span-3" required />
             </div>
             <DialogFooter>
               <Button type="submit">Add Stock</Button>
