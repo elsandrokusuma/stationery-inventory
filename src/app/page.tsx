@@ -44,15 +44,8 @@ const lineChartConfig = {
 }
 
 export default function DashboardPage() {
-  const [totalValue, setTotalValue] = useState(0);
-
-  useEffect(() => {
-    // Generate random prices on the client to avoid hydration mismatch
-    const calculatedValue = inventoryItems.reduce((acc, item) => acc + item.quantity * Math.random() * 100, 0);
-    setTotalValue(calculatedValue);
-  }, []);
-
-  const lowStockItems = inventoryItems.filter(item => item.quantity < 5).length;
+  const totalItems = inventoryItems.reduce((acc, item) => acc + item.quantity, 0);
+  const lowStockItems = inventoryItems.filter(item => item.quantity <= 5 && item.quantity > 0).length;
   const pendingPreOrders = preOrders.filter(order => order.status === "Pending").length;
 
   const topItemsData = [...inventoryItems]
@@ -85,14 +78,14 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Inventory Value
+              Total Items
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalValue > 0 ? totalValue.toLocaleString('en-US', {maximumFractionDigits: 2}) : '...'}</div>
+            <div className="text-2xl font-bold">{totalItems.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Estimated value of all items in stock
+              Total number of all items in stock
             </p>
           </CardContent>
         </Card>
@@ -104,7 +97,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{lowStockItems}</div>
             <p className="text-xs text-muted-foreground">
-              Items with quantity less than 5 units
+              Items with quantity 5 or less
             </p>
           </CardContent>
         </Card>
