@@ -63,6 +63,7 @@ export default function PreOrdersPage() {
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [dateFilter, setDateFilter] = React.useState<Date | undefined>(undefined);
   const router = useRouter();
+  const [selectedUnit, setSelectedUnit] = React.useState<string | undefined>();
 
   React.useEffect(() => {
     try {
@@ -106,7 +107,7 @@ export default function PreOrdersPage() {
       id: `po${Date.now()}`,
       itemId: selectedItem.id,
       itemName: selectedItem.name,
-      unit: selectedItem.unit,
+      unit: selectedUnit || "Pcs",
       quantity: Number(formData.get("quantity")),
       orderDate: new Date().toISOString(),
       expectedDate: new Date(formData.get("expectedDate") as string).toISOString(),
@@ -118,6 +119,8 @@ export default function PreOrdersPage() {
       description: `Pre-order for ${newPreOrder.quantity}x ${newPreOrder.itemName} has been created.`,
     });
     setCreateOpen(false);
+    setSelectedUnit(undefined);
+    (e.target as HTMLFormElement).reset();
   };
 
   const updateStatus = (id: string, status: PreOrder['status']) => {
@@ -220,7 +223,7 @@ export default function PreOrdersPage() {
   const selectableRowCount = filteredPreOrders.filter(o => o.status === 'Pending' || o.status === 'Approved').length;
   const isAllSelected = selectedRows.length > 0 && selectableRowCount > 0 && selectedRows.length === selectableRowCount;
   const canRequestApproval = selectedRows.some(id => preOrders.find(o => o.id === id)?.status === 'Pending');
-  const canExport = selectedRows.length > 0;
+  const canExport = selectedRows.some(id => preOrders.find(o => o.id === id)?.status === 'Approved');
 
   return (
     <div className="flex flex-col gap-8">
@@ -307,6 +310,26 @@ export default function PreOrdersPage() {
                           {item.name}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="unit" className="text-right">Unit</Label>
+                  <Select name="unit" required onValueChange={setSelectedUnit}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pcs">Pcs</SelectItem>
+                      <SelectItem value="Pack">Pack</SelectItem>
+                      <SelectItem value="Box">Box</SelectItem>
+                      <SelectItem value="Roll">Roll</SelectItem>
+                      <SelectItem value="Rim">Rim</SelectItem>
+                      <SelectItem value="Tube">Tube</SelectItem>
+                      <SelectItem value="Bottle">Bottle</SelectItem>
+                      <SelectItem value="Can">Can</SelectItem>
+                      <SelectItem value="Sheet">Sheet</SelectItem>
+                      <SelectItem value="Cartridge">Cartridge</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -402,3 +425,4 @@ export default function PreOrdersPage() {
     </div>
   );
 }
+
