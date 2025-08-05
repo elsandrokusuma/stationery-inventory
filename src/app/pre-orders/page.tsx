@@ -32,8 +32,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PlusCircle, MoreHorizontal, Send, Calendar as CalendarIcon, X, FileDown } from "lucide-react";
-import { preOrders as initialPreOrders, inventoryItems } from "@/lib/placeholder-data";
-import type { PreOrder } from "@/lib/types";
+import { preOrders as initialPreOrders, initialInventoryItems } from "@/lib/placeholder-data";
+import type { PreOrder, InventoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -49,15 +49,47 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
 const APPROVAL_STORAGE_KEY = "stockpilot-pending-approvals";
+const PREORDERS_STORAGE_KEY = "stockpilot-preorders";
+const INVENTORY_STORAGE_KEY = "stockpilot-inventory";
+
 
 export default function PreOrdersPage() {
-  const [preOrders, setPreOrders] = React.useState<PreOrder[]>(initialPreOrders);
+  const [preOrders, setPreOrders] = React.useState<PreOrder[]>([]);
+  const [inventoryItems, setInventoryItems] = React.useState<InventoryItem[]>([]);
   const [isCreateOpen, setCreateOpen] = React.useState(false);
   const { toast } = useToast();
   const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [dateFilter, setDateFilter] = React.useState<Date | undefined>(undefined);
   const router = useRouter();
+
+  React.useEffect(() => {
+    try {
+      const storedPreOrders = localStorage.getItem(PREORDERS_STORAGE_KEY);
+      if (storedPreOrders) {
+        setPreOrders(JSON.parse(storedPreOrders));
+      } else {
+        localStorage.setItem(PREORDERS_STORAGE_KEY, JSON.stringify(initialPreOrders));
+        setPreOrders(initialPreOrders);
+      }
+      
+      const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+      if (storedInventory) {
+        setInventoryItems(JSON.parse(storedInventory));
+      } else {
+        setInventoryItems(initialInventoryItems);
+      }
+    } catch (error) {
+      console.error("Failed to access localStorage", error);
+      setPreOrders(initialPreOrders);
+      setInventoryItems(initialInventoryItems);
+    }
+  }, []);
+
+  const updatePreOrders = (updatedOrders: PreOrder[]) => {
+    setPreOrders(updatedOrders);
+    localStorage.setItem(PREORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
+  }
 
 
   const handleCreatePreOrder = (e: React.FormEvent<HTMLFormElement>) => {
@@ -69,15 +101,15 @@ export default function PreOrdersPage() {
     if (!selectedItem) return;
 
     const newPreOrder: PreOrder = {
-      id: `po${preOrders.length + 1}`,
+      id: `po${Date.now()}`,
       itemId: selectedItem.id,
       itemName: selectedItem.name,
       quantity: Number(formData.get("quantity")),
-      orderDate: new Date().toISOString().split("T")[0],
-      expectedDate: formData.get("expectedDate") as string,
+      orderDate: new Date().toISOString(),
+      expectedDate: new Date(formData.get("expectedDate") as string).toISOString(),
       status: "Pending",
     };
-    setPreOrders([newPreOrder, ...preOrders]);
+    updatePreOrders([newPreOrder, ...preOrders]);
     toast({
       title: "Pre-Order Created",
       description: `Pre-order for ${newPreOrder.quantity}x ${newPreOrder.itemName} has been created.`,
@@ -86,9 +118,10 @@ export default function PreOrdersPage() {
   };
 
   const updateStatus = (id: string, status: PreOrder['status']) => {
-    setPreOrders(preOrders.map(order =>
+    const updatedOrders = preOrders.map(order =>
       order.id === id ? { ...order, status } : order
-    ));
+    );
+    updatePreOrders(updatedOrders);
     toast({
       title: 'Status Updated',
       description: `Order ${id} marked as ${status}.`
@@ -108,14 +141,17 @@ export default function PreOrdersPage() {
 
     try {
       const existingApprovals: PreOrder[] = JSON.parse(localStorage.getItem(APPROVAL_STORAGE_KEY) || '[]');
-      const newApprovals = [...existingApprovals, ...itemsToApprove];
+      // Filter out items that might already be in the approval queue
+      const newItemsToApprove = itemsToApprove.filter(item => !existingApprovals.some(approval => approval.id === item.id));
+      const newApprovals = [...existingApprovals, ...newItemsToApprove];
       localStorage.setItem(APPROVAL_STORAGE_KEY, JSON.stringify(newApprovals));
       
-      setPreOrders(preOrders.map(order =>
+      const updatedOrders = preOrders.map(order =>
         itemsToApprove.some(item => item.id === order.id)
           ? { ...order, status: 'Awaiting Approval' }
           : order
-      ));
+      );
+      updatePreOrders(updatedOrders);
       
       setSelectedRows([]);
       toast({
@@ -163,11 +199,11 @@ export default function PreOrdersPage() {
 
   const filteredPreOrders = preOrders.filter(order => {
     const statusMatch = statusFilter === 'all' || order.status === statusFilter;
-    const dateMatch = !dateFilter || order.expectedDate === format(dateFilter, 'yyyy-MM-dd');
+    const dateMatch = !dateFilter || format(new Date(order.expectedDate), 'yyyy-MM-dd') === format(dateFilter, 'yyyy-MM-dd');
     return statusMatch && dateMatch;
   });
   
-  const isAllSelected = selectedRows.length > 0 && selectedRows.length === filteredPreOrders.filter(o => o.status === 'Pending').length;
+  const isAllSelected = selectedRows.length > 0 && filteredPreOrders.filter(o => o.status === 'Pending').length > 0 && selectedRows.length === filteredPreOrders.filter(o => o.status === 'Pending').length;
   const canRequestApproval = selectedRows.some(id => preOrders.find(o => o.id === id)?.status === 'Pending');
   const canExport = selectedRows.length > 0;
 
@@ -282,6 +318,7 @@ export default function PreOrdersPage() {
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                     aria-label="Select all"
+                    disabled={filteredPreOrders.filter(o => o.status === 'Pending').length === 0}
                   />
               </TableHead>
               <TableHead>Item Name</TableHead>
@@ -302,6 +339,7 @@ export default function PreOrdersPage() {
                       checked={selectedRows.includes(order.id)}
                       onCheckedChange={() => handleSelectRow(order.id)}
                       aria-label="Select row"
+                      disabled={order.status !== 'Pending'}
                     />
                 </TableCell>
                 <TableCell className="font-medium">{order.itemName}</TableCell>
@@ -343,3 +381,5 @@ export default function PreOrdersPage() {
     </div>
   );
 }
+
+    

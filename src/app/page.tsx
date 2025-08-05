@@ -20,10 +20,26 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart } from "recharts"
-import { inventoryItems, transactions, preOrders } from "@/lib/placeholder-data"
-import { AlertCircle, ArrowDownLeft, ArrowUpRight, DollarSign, Package, ShoppingCart } from "lucide-react"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import type { InventoryItem, Transaction, PreOrder } from "@/lib/types"
+import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ShoppingCart, Trash2 } from "lucide-react"
 import { useState, useEffect } from "react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+
+const INVENTORY_STORAGE_KEY = "stockpilot-inventory";
+const TRANSACTIONS_STORAGE_KEY = "stockpilot-transactions";
+const PREORDERS_STORAGE_KEY = "stockpilot-preorders";
 
 const chartConfig = {
   quantity: {
@@ -32,18 +48,21 @@ const chartConfig = {
   },
 }
 
-const lineChartConfig = {
-  in: {
-    label: "Stock In",
-    color: "hsl(var(--chart-2))",
-  },
-  out: {
-    label: "Stock Out",
-    color: "hsl(var(--destructive))",
-  },
-}
-
 export default function DashboardPage() {
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
+
+  useEffect(() => {
+    const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+    const storedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+    const storedPreOrders = localStorage.getItem(PREORDERS_STORAGE_KEY);
+
+    if (storedInventory) setInventoryItems(JSON.parse(storedInventory));
+    if (storedTransactions) setTransactions(JSON.parse(storedTransactions));
+    if (storedPreOrders) setPreOrders(JSON.parse(storedPreOrders));
+  }, []);
+
   const totalItems = inventoryItems.reduce((acc, item) => acc + item.quantity, 0);
   const lowStockItems = inventoryItems.filter(item => item.quantity <= 5 && item.quantity > 0).length;
   const pendingPreOrders = preOrders.filter(order => order.status === "Pending").length;
@@ -52,26 +71,41 @@ export default function DashboardPage() {
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5)
 
-  const stockMovements = transactions.reduce((acc, t) => {
-    const date = new Date(t.date).toLocaleDateString();
-    if (!acc[date]) {
-      acc[date] = { date, in: 0, out: 0 };
-    }
-    if (t.type === 'in') {
-      acc[date].in += t.quantity;
-    } else {
-      acc[date].out += t.quantity;
-    }
-    return acc;
-  }, {} as Record<string, {date: string; in: number; out: number}>)
-
-  const stockMovementsData = Object.values(stockMovements).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const handleClearData = () => {
+    localStorage.removeItem(INVENTORY_STORAGE_KEY);
+    localStorage.removeItem(TRANSACTIONS_STORAGE_KEY);
+    localStorage.removeItem(PREORDERS_STORAGE_KEY);
+    // You might want to reload the page or reset the state to reflect the changes
+    window.location.reload();
+  };
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to StockPilot, your inventory command center.</p>
+      <header className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Welcome to StockPilot, your inventory command center.</p>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Reset All Data
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action will permanently delete all inventory, transaction, and pre-order data from your browser's local storage. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleClearData}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -156,41 +190,46 @@ export default function DashboardPage() {
             <CardDescription>The latest stock movements in your inventory.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">Type</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.slice(0, 5).map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>
-                      <div className="font-medium">{transaction.itemName}</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{transaction.quantity}</TableCell>
-                    <TableCell className="text-right">
-                      {transaction.type === 'in' ? (
-                        <Badge variant="default">
-                          <ArrowDownLeft className="mr-1 h-3 w-3" />
-                          In
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <ArrowUpRight className="mr-1 h-3 w-3" />
-                          Out
-                        </Badge>
-                      )}
-                    </TableCell>
+             {transactions.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item</TableHead>
+                    <TableHead className="text-right">Qty</TableHead>
+                    <TableHead className="text-right">Type</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {transactions.slice(0, 5).map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        <div className="font-medium">{transaction.itemName}</div>
+                        <div className="hidden text-sm text-muted-foreground md:inline">
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{transaction.quantity}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          variant={
+                            transaction.type === 'in' || transaction.type === 'add' ? 'default' :
+                            transaction.type === 'edit' ? 'secondary' :
+                            'destructive'
+                          }
+                        >
+                          {transaction.type === 'in' || transaction.type === 'add' ? <ArrowDownLeft className="mr-1 h-3 w-3" /> : <ArrowUpRight className="mr-1 h-3 w-3" />}
+                          {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+             ) : (
+                <div className="text-center text-sm text-muted-foreground py-8">
+                    No transactions recorded yet.
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>

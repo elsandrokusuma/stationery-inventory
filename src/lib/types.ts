@@ -3,18 +3,18 @@ export type InventoryItem = {
   name: string;
   unit: string;
   quantity: number;
-  lastUpdated: string;
 };
 
 export type Transaction = {
   id: string;
   itemId: string;
-  itemName: string;
-  type: 'in' | 'out';
+  itemName:string;
+  type: 'in' | 'out' | 'edit' | 'add' | 'delete';
   quantity: number;
   date: string;
-  person: string; // Supplier for 'in', Recipient for 'out'
+  person?: string; // Supplier for 'in', Recipient for 'out'
 };
+
 
 export type PreOrder = {
   id: string;
