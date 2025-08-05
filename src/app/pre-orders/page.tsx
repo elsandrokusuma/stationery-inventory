@@ -4,6 +4,18 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  doc,
+  writeBatch,
+  query,
+  orderBy
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+import {
   Table,
   TableBody,
   TableCell,
@@ -32,7 +44,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PlusCircle, MoreHorizontal, Send, Calendar as CalendarIcon, X, FileDown } from "lucide-react";
-import { preOrders as initialPreOrders, initialInventoryItems } from "@/lib/placeholder-data";
 import type { PreOrder, InventoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -48,12 +59,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
-
-const APPROVAL_STORAGE_KEY = "stationery-inventory-pending-approvals";
-const PREORDERS_STORAGE_KEY = "stationery-inventory-preorders";
-const INVENTORY_STORAGE_KEY = "stationery-inventory-inventory";
-
-
 export default function PreOrdersPage() {
   const [preOrders, setPreOrders] = React.useState<PreOrder[]>([]);
   const [inventoryItems, setInventoryItems] = React.useState<InventoryItem[]>([]);
@@ -66,36 +71,31 @@ export default function PreOrdersPage() {
   const [selectedUnit, setSelectedUnit] = React.useState<string | undefined>();
 
   React.useEffect(() => {
-    try {
-      const storedPreOrders = localStorage.getItem(PREORDERS_STORAGE_KEY);
-      if (storedPreOrders) {
-        setPreOrders(JSON.parse(storedPreOrders));
-      } else {
-        localStorage.setItem(PREORDERS_STORAGE_KEY, JSON.stringify(initialPreOrders));
-        setPreOrders(initialPreOrders);
-      }
-      
-      const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
-      if (storedInventory) {
-        setInventoryItems(JSON.parse(storedInventory));
-      } else {
-        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(initialInventoryItems));
-        setInventoryItems(initialInventoryItems);
-      }
-    } catch (error) {
-      console.error("Failed to access localStorage", error);
-      setPreOrders(initialPreOrders);
-      setInventoryItems(initialInventoryItems);
-    }
+    const qPreOrders = query(collection(db, "pre-orders"), orderBy("orderDate", "desc"));
+    const unsubscribePreOrders = onSnapshot(qPreOrders, (querySnapshot) => {
+      const orders: PreOrder[] = [];
+      querySnapshot.forEach((doc) => {
+        orders.push({ id: doc.id, ...doc.data() } as PreOrder);
+      });
+      setPreOrders(orders);
+    });
+
+    const qInventory = query(collection(db, "inventory"), orderBy("name"));
+    const unsubscribeInventory = onSnapshot(qInventory, (querySnapshot) => {
+      const items: InventoryItem[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as InventoryItem);
+      });
+      setInventoryItems(items);
+    });
+
+    return () => {
+      unsubscribePreOrders();
+      unsubscribeInventory();
+    };
   }, []);
 
-  const updatePreOrders = (updatedOrders: PreOrder[]) => {
-    setPreOrders(updatedOrders);
-    localStorage.setItem(PREORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
-  }
-
-
-  const handleCreatePreOrder = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreatePreOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const selectedItemId = formData.get("item") as string;
@@ -103,8 +103,7 @@ export default function PreOrdersPage() {
 
     if (!selectedItem) return;
 
-    const newPreOrder: PreOrder = {
-      id: `po${Date.now()}`,
+    const newPreOrderData: Omit<PreOrder, 'id'> = {
       itemId: selectedItem.id,
       itemName: selectedItem.name,
       unit: selectedUnit || "Pcs",
@@ -113,28 +112,28 @@ export default function PreOrdersPage() {
       expectedDate: new Date(formData.get("expectedDate") as string).toISOString(),
       status: "Pending",
     };
-    updatePreOrders([newPreOrder, ...preOrders]);
+    
+    await addDoc(collection(db, "pre-orders"), newPreOrderData);
+    
     toast({
       title: "Pre-Order Created",
-      description: `Pre-order for ${newPreOrder.quantity}x ${newPreOrder.itemName} has been created.`,
+      description: `Pre-order for ${newPreOrderData.quantity}x ${newPreOrderData.itemName} has been created.`,
     });
     setCreateOpen(false);
     setSelectedUnit(undefined);
     (e.target as HTMLFormElement).reset();
   };
 
-  const updateStatus = (id: string, status: PreOrder['status']) => {
-    const updatedOrders = preOrders.map(order =>
-      order.id === id ? { ...order, status } : order
-    );
-    updatePreOrders(updatedOrders);
+  const updateStatus = async (id: string, status: PreOrder['status']) => {
+    const orderRef = doc(db, "pre-orders", id);
+    await updateDoc(orderRef, { status });
     toast({
       title: 'Status Updated',
       description: `Order ${id} marked as ${status}.`
     });
   };
 
-  const handleRequestApproval = () => {
+  const handleRequestApproval = async () => {
     const itemsToApprove = preOrders.filter(order => selectedRows.includes(order.id) && order.status === 'Pending');
     if (itemsToApprove.length === 0) {
       toast({
@@ -146,19 +145,19 @@ export default function PreOrdersPage() {
     }
 
     try {
-      const existingApprovals: PreOrder[] = JSON.parse(localStorage.getItem(APPROVAL_STORAGE_KEY) || '[]');
-      // Filter out items that might already be in the approval queue
-      const newItemsToApprove = itemsToApprove.filter(item => !existingApprovals.some(approval => approval.id === item.id));
-      const newApprovals = [...existingApprovals, ...newItemsToApprove];
-      localStorage.setItem(APPROVAL_STORAGE_KEY, JSON.stringify(newApprovals));
-      
-      const updatedOrders = preOrders.map(order =>
-        itemsToApprove.some(item => item.id === order.id)
-          ? { ...order, status: 'Awaiting Approval' }
-          : order
-      );
-      updatePreOrders(updatedOrders);
-      
+      const batch = writeBatch(db);
+      const approvalItems: PreOrder[] = [];
+
+      itemsToApprove.forEach(order => {
+        const approvalItem = { ...order, status: 'Awaiting Approval' as const };
+        // Don't add to approvals collection, just update status
+        approvalItems.push(approvalItem);
+        const orderRef = doc(db, 'pre-orders', order.id);
+        batch.update(orderRef, { status: 'Awaiting Approval' });
+      });
+
+      await batch.commit();
+
       setSelectedRows([]);
       toast({
         title: 'Approval Requested',
@@ -166,10 +165,11 @@ export default function PreOrdersPage() {
       });
       router.push('/approval');
     } catch (error) {
+       console.error("Error requesting approval: ", error);
       toast({
         variant: 'destructive',
-        title: 'Failed to save approvals',
-        description: 'Could not save approval requests to local storage.',
+        title: 'Failed to request approvals',
+        description: 'Could not update pre-order statuses in the database.',
       });
     }
   };
@@ -425,4 +425,3 @@ export default function PreOrdersPage() {
     </div>
   );
 }
-

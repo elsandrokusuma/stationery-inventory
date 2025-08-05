@@ -1,7 +1,18 @@
+
 "use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 import {
   Table,
   TableBody,
@@ -17,8 +28,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { PreOrder } from "@/lib/types";
 import { Check, X } from "lucide-react";
 
-const APPROVAL_STORAGE_KEY = "stationery-inventory-pending-approvals";
-const PREORDERS_STORAGE_KEY = "stationery-inventory-preorders";
 
 export default function ApprovalPage() {
   const [approvalItems, setApprovalItems] = React.useState<PreOrder[]>([]);
@@ -26,52 +35,42 @@ export default function ApprovalPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    try {
-      const storedItems = localStorage.getItem(APPROVAL_STORAGE_KEY);
-      if (storedItems) {
-        setApprovalItems(JSON.parse(storedItems));
-      }
-    } catch (error) {
-      console.error("Failed to parse approval items from localStorage", error);
-    }
+    const q = query(collection(db, "pre-orders"), where("status", "==", "Awaiting Approval"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const items: PreOrder[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as PreOrder);
+      });
+      setApprovalItems(items);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleDecision = (orderId: string, decision: "approved" | "rejected") => {
+  const handleDecision = async (orderId: string, decision: "approved" | "rejected") => {
     const originalOrder = approvalItems.find((item) => item.id === orderId);
     if (!originalOrder) return;
 
-    // Remove from approval queue
-    const updatedApprovalItems = approvalItems.filter((item) => item.id !== orderId);
-    setApprovalItems(updatedApprovalItems);
-    localStorage.setItem(APPROVAL_STORAGE_KEY, JSON.stringify(updatedApprovalItems));
-
-    // Update status in main pre-orders list
+    const newStatus = decision === "approved" ? "Approved" : "Rejected";
+    const orderRef = doc(db, "pre-orders", orderId);
+    
     try {
-        const allPreOrders: PreOrder[] = JSON.parse(localStorage.getItem(PREORDERS_STORAGE_KEY) || '[]');
-        const updatedPreOrders = allPreOrders.map(order => {
-            if (order.id === orderId) {
-                return { ...order, status: decision === 'approved' ? 'Approved' : 'Rejected' };
-            }
-            return order;
+        await updateDoc(orderRef, { status: newStatus });
+        toast({
+          title: `Pre-Order ${decision}`,
+          description: `The pre-order for ${originalOrder.itemName} has been ${decision}.`,
         });
-        localStorage.setItem(PREORDERS_STORAGE_KEY, JSON.stringify(updatedPreOrders));
-    } catch (error) {
-        console.error("Failed to update pre-orders in localStorage", error);
+
+        // If no more items to approve, redirect back
+        if (approvalItems.length - 1 === 0) {
+            router.push('/pre-orders');
+        }
+    } catch(error) {
+        console.error("Failed to update pre-order status", error);
         toast({
             variant: "destructive",
             title: "Error updating pre-order status",
         });
-        return;
-    }
-    
-    toast({
-      title: `Pre-Order ${decision}`,
-      description: `The pre-order for ${originalOrder.itemName} has been ${decision}.`,
-    });
-
-    // If no more items to approve, redirect back
-    if (updatedApprovalItems.length === 0) {
-        router.push('/pre-orders');
     }
   };
 

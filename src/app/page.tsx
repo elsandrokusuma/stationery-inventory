@@ -1,3 +1,4 @@
+
 "use client"
 import {
   Card,
@@ -24,10 +25,9 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import type { InventoryItem, Transaction, PreOrder } from "@/lib/types"
 import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ShoppingCart } from "lucide-react"
 import { useState, useEffect } from "react"
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-const INVENTORY_STORAGE_KEY = "stationery-inventory-inventory";
-const TRANSACTIONS_STORAGE_KEY = "stationery-inventory-transactions";
-const PREORDERS_STORAGE_KEY = "stationery-inventory-preorders";
 
 const chartConfig = {
   quantity: {
@@ -42,13 +42,38 @@ export default function DashboardPage() {
   const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
 
   useEffect(() => {
-    const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
-    const storedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
-    const storedPreOrders = localStorage.getItem(PREORDERS_STORAGE_KEY);
+    const qInventory = query(collection(db, "inventory"), orderBy("name"));
+    const unsubscribeInventory = onSnapshot(qInventory, (querySnapshot) => {
+      const items: InventoryItem[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as InventoryItem);
+      });
+      setInventoryItems(items);
+    });
 
-    if (storedInventory) setInventoryItems(JSON.parse(storedInventory));
-    if (storedTransactions) setTransactions(JSON.parse(storedTransactions));
-    if (storedPreOrders) setPreOrders(JSON.parse(storedPreOrders));
+    const qTransactions = query(collection(db, "transactions"), orderBy("date", "desc"), limit(5));
+    const unsubscribeTransactions = onSnapshot(qTransactions, (querySnapshot) => {
+      const trans: Transaction[] = [];
+      querySnapshot.forEach((doc) => {
+        trans.push({ id: doc.id, ...doc.data() } as Transaction);
+      });
+      setTransactions(trans);
+    });
+    
+    const qPreOrders = query(collection(db, "pre-orders"), orderBy("orderDate", "desc"));
+    const unsubscribePreOrders = onSnapshot(qPreOrders, (querySnapshot) => {
+      const orders: PreOrder[] = [];
+      querySnapshot.forEach((doc) => {
+        orders.push({ id: doc.id, ...doc.data() } as PreOrder);
+      });
+      setPreOrders(orders);
+    });
+
+    return () => {
+        unsubscribeInventory();
+        unsubscribeTransactions();
+        unsubscribePreOrders();
+    }
   }, []);
 
   const totalItems = inventoryItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -160,7 +185,7 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.slice(0, 5).map((transaction) => (
+                  {transactions.map((transaction) => (
                     <TableRow key={transaction.id}>
                       <TableCell>
                         <div className="font-medium">{transaction.itemName}</div>

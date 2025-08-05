@@ -1,6 +1,22 @@
+
 "use client";
 
 import * as React from "react";
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  writeBatch,
+  getDocs,
+  where
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 import {
   Table,
   TableBody,
@@ -49,7 +65,6 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
-import { initialInventoryItems } from "@/lib/placeholder-data";
 import type { InventoryItem, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -62,13 +77,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
 
-const INVENTORY_STORAGE_KEY = "stationery-inventory-inventory";
-const TRANSACTIONS_STORAGE_KEY = "stationery-inventory-transactions";
-
-
 export default function InventoryPage() {
   const [items, setItems] = React.useState<InventoryItem[]>([]);
-  const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isAddOpen, setAddOpen] = React.useState(false);
   const [isStockInOpen, setStockInOpen] = React.useState(false);
@@ -80,69 +90,55 @@ export default function InventoryPage() {
   const [selectedUnit, setSelectedUnit] = React.useState<string | undefined>();
 
   React.useEffect(() => {
-    // Load inventory from localStorage or initialize with placeholder data
-    try {
-      const storedItems = localStorage.getItem(INVENTORY_STORAGE_KEY);
-      if (storedItems) {
-        setItems(JSON.parse(storedItems));
-      } else {
-        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(initialInventoryItems));
-        setItems(initialInventoryItems);
-      }
+    const q = query(collection(db, "inventory"), orderBy("name"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const inventoryItems: InventoryItem[] = [];
+      querySnapshot.forEach((doc) => {
+        inventoryItems.push({ id: doc.id, ...doc.data() } as InventoryItem);
+      });
+      setItems(inventoryItems);
+    });
 
-      const storedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
-      if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions));
-      }
-    } catch (error) {
-      console.error("Failed to access localStorage", error);
-      setItems(initialInventoryItems);
-    }
+    return () => unsubscribe();
   }, []);
 
-  const updateItems = (updatedItems: InventoryItem[]) => {
-    setItems(updatedItems);
-    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(updatedItems));
-  };
-
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date'>) => {
-    const newTransaction = {
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
+    await addDoc(collection(db, "transactions"), {
       ...transaction,
-      id: `t${Date.now()}`,
       date: new Date().toISOString(),
-    };
-    const updatedTransactions = [newTransaction, ...transactions];
-    setTransactions(updatedTransactions);
-    localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(updatedTransactions));
+    });
   };
 
 
-  const handleAddItem = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddItem = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newItem: InventoryItem = {
-      id: `i${Date.now()}`,
+    const newItemData = {
       name: formData.get("name") as string,
       unit: selectedUnit || (formData.get("unit") as string),
       quantity: Number(formData.get("quantity")),
     };
-    updateItems([...items, newItem]);
+
+    const docRef = await addDoc(collection(db, "inventory"), newItemData);
+    
     addTransaction({
-        itemId: newItem.id,
-        itemName: newItem.name,
+        itemId: docRef.id,
+        itemName: newItemData.name,
         type: 'add',
-        quantity: newItem.quantity,
+        quantity: newItemData.quantity,
     });
+
     toast({
       title: "Success",
-      description: `${newItem.name} has been added to inventory.`,
+      description: `${newItemData.name} has been added to inventory.`,
     });
+
     setAddOpen(false);
     setSelectedUnit(undefined);
     (e.target as HTMLFormElement).reset();
   };
 
-  const handleStockUpdate = (type: "in" | "out") => (e: React.FormEvent<HTMLFormElement>) => {
+  const handleStockUpdate = (type: "in" | "out") => async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (!selectedItem) return;
 
@@ -150,26 +146,21 @@ export default function InventoryPage() {
       const quantity = Number(formData.get("quantity"));
       const person = formData.get("person") as string | undefined;
 
-      const updatedItems = items.map((item) => {
-        if (item.id === selectedItem.id) {
-          const newQuantity =
-            type === "in" ? item.quantity + quantity : item.quantity - quantity;
-          if (newQuantity < 0) {
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Stock cannot be negative.",
-            });
-            return item;
-          }
-          addTransaction({ itemId: item.id, itemName: item.name, type, quantity, person });
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
+      const itemRef = doc(db, "inventory", selectedItem.id);
+      const newQuantity = type === "in" ? selectedItem.quantity + quantity : selectedItem.quantity - quantity;
 
-      updateItems(updatedItems);
-
+      if (newQuantity < 0) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Stock cannot be negative.",
+        });
+        return;
+      }
+      
+      await updateDoc(itemRef, { quantity: newQuantity });
+      addTransaction({ itemId: selectedItem.id, itemName: selectedItem.name, type, quantity, person });
+      
       toast({
         title: "Stock Updated",
         description: `Quantity for ${selectedItem.name} updated.`,
@@ -179,7 +170,7 @@ export default function InventoryPage() {
       else setStockOutOpen(false);
   };
 
-  const handleEditQuantity = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEditQuantity = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedItem) return;
 
@@ -195,12 +186,9 @@ export default function InventoryPage() {
       return;
     }
 
-    const updatedItems = items.map((item) =>
-      item.id === selectedItem.id
-        ? { ...item, quantity }
-        : item
-    );
-    updateItems(updatedItems);
+    const itemRef = doc(db, "inventory", selectedItem.id);
+    await updateDoc(itemRef, { quantity });
+
     addTransaction({
       itemId: selectedItem.id,
       itemName: selectedItem.name,
@@ -215,11 +203,11 @@ export default function InventoryPage() {
     setEditOpen(false);
   };
 
-  const handleDeleteItem = () => {
+  const handleDeleteItem = async () => {
     if (!selectedItem) return;
 
-    const updatedItems = items.filter(item => item.id !== selectedItem.id);
-    updateItems(updatedItems);
+    await deleteDoc(doc(db, "inventory", selectedItem.id));
+    
     addTransaction({
         itemId: selectedItem.id,
         itemName: selectedItem.name,

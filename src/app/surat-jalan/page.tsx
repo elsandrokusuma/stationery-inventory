@@ -4,6 +4,15 @@
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  collection,
+  query,
+  where,
+  getDocs,
+  documentId,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+import {
   Table,
   TableBody,
   TableCell,
@@ -17,27 +26,33 @@ import { Separator } from "@/components/ui/separator";
 import type { PreOrder } from "@/lib/types";
 import { Printer } from "lucide-react";
 
-const PREORDERS_STORAGE_KEY = "stationery-inventory-preorders";
 
 export default function SuratJalanPage() {
   const searchParams = useSearchParams();
   const [orders, setOrders] = React.useState<PreOrder[]>([]);
 
   React.useEffect(() => {
-    const ids = searchParams.get("ids")?.split(",");
-    if (!ids) return;
+    const fetchOrders = async () => {
+        const ids = searchParams.get("ids")?.split(",");
+        if (!ids || ids.length === 0) {
+            setOrders([]);
+            return;
+        };
 
-    try {
-      const allPreOrders: PreOrder[] = JSON.parse(
-        localStorage.getItem(PREORDERS_STORAGE_KEY) || "[]"
-      );
-      const selectedOrders = allPreOrders.filter((order) =>
-        ids.includes(order.id)
-      );
-      setOrders(selectedOrders);
-    } catch (error) {
-      console.error("Failed to parse pre-orders from localStorage", error);
-    }
+        try {
+            const q = query(collection(db, "pre-orders"), where(documentId(), "in", ids));
+            const querySnapshot = await getDocs(q);
+            const selectedOrders: PreOrder[] = [];
+            querySnapshot.forEach((doc) => {
+                selectedOrders.push({ id: doc.id, ...doc.data() } as PreOrder);
+            });
+            setOrders(selectedOrders);
+        } catch (error) {
+            console.error("Failed to fetch pre-orders from Firestore", error);
+        }
+    };
+    
+    fetchOrders();
   }, [searchParams]);
 
   const handlePrint = () => {
