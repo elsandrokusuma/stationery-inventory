@@ -93,18 +93,6 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isActive("/predict")}
-              tooltip={{ children: "Predictive Tool" }}
-            >
-              <Link href="/predict">
-                <BrainCircuit />
-                <span>Predict Needs</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2">
