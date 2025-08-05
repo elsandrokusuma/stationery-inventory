@@ -27,6 +27,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   MoreHorizontal,
+  Search,
 } from "lucide-react";
 import { inventoryItems as initialItems } from "@/lib/placeholder-data";
 import type { InventoryItem } from "@/lib/types";
@@ -42,6 +43,7 @@ import { Card } from "@/components/ui/card";
 
 export default function InventoryPage() {
   const [items, setItems] = React.useState<InventoryItem[]>(initialItems);
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [isAddOpen, setAddOpen] = React.useState(false);
   const [isStockInOpen, setStockInOpen] = React.useState(false);
   const [isStockOutOpen, setStockOutOpen] = React.useState(false);
@@ -104,53 +106,69 @@ export default function InventoryPage() {
       else setStockOutOpen(false);
   };
 
+  const filteredItems = items.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
           <p className="text-muted-foreground">
             Manage your products and their stock levels.
           </p>
         </div>
-        <Dialog open={isAddOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Inventory Item</DialogTitle>
-              <DialogDescription>
-                Fill in the details below to add a new product.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleAddItem} className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Name</Label>
-                <Input id="name" name="name" className="col-span-3" required />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="unit" className="text-right">Unit</Label>
-                <Input id="unit" name="unit" className="col-span-3" required />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="quantity" className="text-right">Quantity</Label>
-                <Input id="quantity" name="quantity" type="number" className="col-span-3" required />
-              </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="supplier" className="text-right">Supplier</Label>
-                <Input id="supplier" name="supplier" className="col-span-3" required />
-              </div>
-              <DialogFooter>
-                <Button type="submit">Save Item</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+           <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by item name..."
+              className="pl-8 sm:w-[300px]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Dialog open={isAddOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Item
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Inventory Item</DialogTitle>
+                <DialogDescription>
+                  Fill in the details below to add a new product.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddItem} className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">Name</Label>
+                  <Input id="name" name="name" className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="unit" className="text-right">Unit</Label>
+                  <Input id="unit" name="unit" className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="quantity" className="text-right">Quantity</Label>
+                  <Input id="quantity" name="quantity" type="number" className="col-span-3" required />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="supplier" className="text-right">Supplier</Label>
+                  <Input id="supplier" name="supplier" className="col-span-3" required />
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Save Item</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
       <Card>
         <Table>
@@ -166,7 +184,7 @@ export default function InventoryPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.unit}</TableCell>
