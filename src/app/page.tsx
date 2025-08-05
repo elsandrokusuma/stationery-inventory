@@ -22,20 +22,8 @@ import {
 } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import type { InventoryItem, Transaction, PreOrder } from "@/lib/types"
-import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ShoppingCart, Trash2 } from "lucide-react"
+import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ShoppingCart } from "lucide-react"
 import { useState, useEffect } from "react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
 
 const INVENTORY_STORAGE_KEY = "stockpilot-inventory";
 const TRANSACTIONS_STORAGE_KEY = "stockpilot-transactions";
@@ -71,14 +59,6 @@ export default function DashboardPage() {
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5)
 
-  const handleClearData = () => {
-    localStorage.removeItem(INVENTORY_STORAGE_KEY);
-    localStorage.removeItem(TRANSACTIONS_STORAGE_KEY);
-    localStorage.removeItem(PREORDERS_STORAGE_KEY);
-    // You might want to reload the page or reset the state to reflect the changes
-    window.location.reload();
-  };
-
   return (
     <div className="flex flex-col gap-8">
       <header className="flex justify-between items-start">
@@ -86,26 +66,6 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Welcome to StockPilot, your inventory command center.</p>
         </div>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Reset All Data
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action will permanently delete all inventory, transaction, and pre-order data from your browser's local storage. This cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleClearData}>Continue</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
