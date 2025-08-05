@@ -35,6 +35,7 @@ import {
   ArrowUpCircle,
   MoreHorizontal,
   Search,
+  Edit,
 } from "lucide-react";
 import { inventoryItems as initialItems } from "@/lib/placeholder-data";
 import type { InventoryItem } from "@/lib/types";
@@ -44,6 +45,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
@@ -54,6 +56,7 @@ export default function InventoryPage() {
   const [isAddOpen, setAddOpen] = React.useState(false);
   const [isStockInOpen, setStockInOpen] = React.useState(false);
   const [isStockOutOpen, setStockOutOpen] = React.useState(false);
+  const [isEditOpen, setEditOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<InventoryItem | null>(
     null
   );
@@ -114,6 +117,38 @@ export default function InventoryPage() {
       if (type === 'in') setStockInOpen(false);
       else setStockOutOpen(false);
   };
+
+  const handleEditQuantity = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedItem) return;
+
+    const formData = new FormData(e.currentTarget);
+    const quantity = Number(formData.get("quantity"));
+
+    if (quantity < 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Quantity cannot be negative.",
+      });
+      return;
+    }
+
+    setItems(
+      items.map((item) =>
+        item.id === selectedItem.id
+          ? { ...item, quantity, lastUpdated: new Date().toISOString().split("T")[0] }
+          : item
+      )
+    );
+
+    toast({
+      title: "Quantity Updated",
+      description: `Quantity for ${selectedItem.name} has been set to ${quantity}.`,
+    });
+    setEditOpen(false);
+  };
+
 
   const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -243,6 +278,15 @@ export default function InventoryPage() {
                       >
                         <ArrowUpCircle className="mr-2 h-4 w-4" /> Stock Out
                       </DropdownMenuItem>
+                       <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setSelectedItem(item);
+                          setEditOpen(true);
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" /> Edit Quantity
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -293,6 +337,37 @@ export default function InventoryPage() {
             </div>
             <DialogFooter>
               <Button type="submit">Remove Stock</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Quantity Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Quantity: {selectedItem?.name}</DialogTitle>
+            <DialogDescription>
+              Set the new total quantity for this item.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditQuantity} className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quantity" className="text-right">
+                New Quantity
+              </Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="number"
+                className="col-span-3"
+                defaultValue={selectedItem?.quantity}
+                required
+                min="0"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit">Save Quantity</Button>
             </DialogFooter>
           </form>
         </DialogContent>
