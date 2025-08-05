@@ -52,7 +52,7 @@ export default function DashboardPage() {
     setTotalValue(calculatedValue);
   }, []);
 
-  const lowStockItems = inventoryItems.filter(item => item.quantity < 50).length;
+  const lowStockItems = inventoryItems.filter(item => item.quantity < 5).length;
   const pendingPreOrders = preOrders.filter(order => order.status === "Pending").length;
 
   const topItemsData = [...inventoryItems]
@@ -104,7 +104,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{lowStockItems}</div>
             <p className="text-xs text-muted-foreground">
-              Items with quantity less than 50 units
+              Items with quantity less than 5 units
             </p>
           </CardContent>
         </Card>

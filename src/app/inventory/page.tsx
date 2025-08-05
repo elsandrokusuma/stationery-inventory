@@ -211,9 +211,9 @@ export default function InventoryPage() {
                 <TableCell>{item.unit}</TableCell>
                 <TableCell className="text-center">
                   <Badge
-                    variant={item.quantity > 50 ? "default" : item.quantity > 0 ? "outline" : "destructive"}
+                    variant={item.quantity > 5 ? "default" : item.quantity > 0 ? "outline" : "destructive"}
                   >
-                    {item.quantity > 50 ? "In Stock" : item.quantity > 0 ? "Low Stock" : "Out of Stock"}
+                    {item.quantity > 5 ? "In Stock" : item.quantity > 0 ? "Low Stock" : "Out of Stock"}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">{item.quantity}</TableCell>
