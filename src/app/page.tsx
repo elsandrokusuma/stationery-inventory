@@ -23,6 +23,7 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart } from "recharts"
 import { inventoryItems, transactions, preOrders } from "@/lib/placeholder-data"
 import { AlertCircle, ArrowDownLeft, ArrowUpRight, DollarSign, Package, ShoppingCart } from "lucide-react"
+import { useState, useEffect } from "react"
 
 const chartConfig = {
   quantity: {
@@ -43,7 +44,14 @@ const lineChartConfig = {
 }
 
 export default function DashboardPage() {
-  const totalValue = inventoryItems.reduce((acc, item) => acc + item.quantity * Math.random() * 100, 0); // Placeholder price
+  const [totalValue, setTotalValue] = useState(0);
+
+  useEffect(() => {
+    // Generate random prices on the client to avoid hydration mismatch
+    const calculatedValue = inventoryItems.reduce((acc, item) => acc + item.quantity * Math.random() * 100, 0);
+    setTotalValue(calculatedValue);
+  }, []);
+
   const lowStockItems = inventoryItems.filter(item => item.quantity < 50).length;
   const pendingPreOrders = preOrders.filter(order => order.status === "Pending").length;
 
@@ -82,7 +90,7 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalValue.toLocaleString('en-US', {maximumFractionDigits: 2})}</div>
+            <div className="text-2xl font-bold">${totalValue > 0 ? totalValue.toLocaleString('en-US', {maximumFractionDigits: 2}) : '...'}</div>
             <p className="text-xs text-muted-foreground">
               Estimated value of all items in stock
             </p>
@@ -175,12 +183,12 @@ export default function DashboardPage() {
                     <TableCell className="text-right">{transaction.quantity}</TableCell>
                     <TableCell className="text-right">
                       {transaction.type === 'in' ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                        <Badge variant="default">
                           <ArrowDownLeft className="mr-1 h-3 w-3" />
                           In
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                        <Badge variant="destructive">
                           <ArrowUpRight className="mr-1 h-3 w-3" />
                           Out
                         </Badge>

@@ -38,6 +38,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Card } from "@/components/ui/card";
 
 export default function InventoryPage() {
   const [items, setItems] = React.useState<InventoryItem[]>(initialItems);
@@ -178,11 +179,6 @@ export default function InventoryPage() {
                 <TableCell className="text-center">
                   <Badge
                     variant={item.quantity > 50 ? "default" : item.quantity > 0 ? "outline" : "destructive"}
-                    className={
-                      item.quantity > 50 ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' 
-                      : item.quantity > 0 ? 'border-orange-400 text-orange-500' 
-                      : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
-                    }
                   >
                     {item.quantity > 50 ? "In Stock" : item.quantity > 0 ? "Low Stock" : "Out of Stock"}
                   </Badge>

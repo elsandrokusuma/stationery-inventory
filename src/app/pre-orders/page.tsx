@@ -40,6 +40,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Card } from "@/components/ui/card";
 
 export default function PreOrdersPage() {
   const [preOrders, setPreOrders] = React.useState<PreOrder[]>(initialPreOrders);
@@ -158,12 +159,7 @@ export default function PreOrdersPage() {
                 <TableCell>{new Date(order.expectedDate).toLocaleDateString()}</TableCell>
                 <TableCell className="text-center">
                   <Badge
-                    variant={order.status === 'Fulfilled' ? 'default' : order.status === 'Pending' ? 'outline' : 'destructive'}
-                    className={
-                        order.status === 'Fulfilled' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' 
-                      : order.status === 'Pending' ? 'border-blue-400 text-blue-500' 
-                      : 'bg-gray-100 text-gray-800'
-                    }
+                    variant={order.status === 'Fulfilled' ? 'default' : order.status === 'Pending' ? 'outline' : 'secondary'}
                   >
                     {order.status}
                   </Badge>
