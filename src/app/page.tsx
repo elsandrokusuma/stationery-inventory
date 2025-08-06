@@ -1,4 +1,5 @@
 
+      
 "use client"
 import {
   Card,
@@ -21,10 +22,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Legend } from "recharts"
 import type { InventoryItem, Transaction, PreOrder } from "@/lib/types"
 import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ClipboardCheck } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -34,11 +35,20 @@ const chartConfig = {
     label: "Quantity",
     color: "hsl(var(--primary))",
   },
+  stockIn: {
+    label: "Stock In",
+    color: "hsl(var(--chart-1))",
+  },
+  stockOut: {
+    label: "Stock Out",
+    color: "hsl(var(--chart-2))",
+  },
 }
 
 export default function DashboardPage() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
 
   useEffect(() => {
@@ -51,13 +61,14 @@ export default function DashboardPage() {
       setInventoryItems(items);
     });
 
-    const qTransactions = query(collection(db, "transactions"), orderBy("date", "desc"), limit(5));
+    const qTransactions = query(collection(db, "transactions"), orderBy("date", "desc"));
     const unsubscribeTransactions = onSnapshot(qTransactions, (querySnapshot) => {
       const trans: Transaction[] = [];
       querySnapshot.forEach((doc) => {
         trans.push({ id: doc.id, ...doc.data() } as Transaction);
       });
       setTransactions(trans);
+      setRecentTransactions(trans.slice(0, 5));
     });
     
     const qPreOrders = query(collection(db, "pre-orders"), orderBy("orderDate", "desc"));
@@ -83,6 +94,33 @@ export default function DashboardPage() {
   const topItemsData = [...inventoryItems]
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5)
+
+  const monthlyStockData = useMemo(() => {
+    const data: { [key: string]: { month: string; stockIn: number; stockOut: number } } = {};
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+      const monthLabel = `${monthNames[date.getMonth()]} '${String(date.getFullYear()).slice(2)}`;
+
+      if (!data[monthKey]) {
+        data[monthKey] = { month: monthLabel, stockIn: 0, stockOut: 0 };
+      }
+
+      if (t.type === 'in' || t.type === 'add') {
+        data[monthKey].stockIn += t.quantity;
+      } else if (t.type === 'out') {
+        data[monthKey].stockOut += t.quantity;
+      }
+    });
+
+    return Object.values(data).sort((a, b) => {
+        const aDate = new Date(a.month.split(" '")[0] + " 1, 20" + a.month.split(" '")[1]);
+        const bDate = new Date(b.month.split(" '")[0] + " 1, 20" + b.month.split(" '")[1]);
+        return aDate.getTime() - bDate.getTime();
+    }).slice(-6); // Get last 6 months
+  }, [transactions]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -134,6 +172,33 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Stock Movement</CardTitle>
+          <CardDescription>A summary of stock in and stock out over the last 6 months.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <BarChart accessibilityLayer data={monthlyStockData}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={(value) => value}
+              />
+               <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Legend />
+              <Bar dataKey="stockIn" fill="var(--color-stockIn)" radius={[4, 4, 0, 0]} name="Stock In" />
+              <Bar dataKey="stockOut" fill="var(--color-stockOut)" radius={[4, 4, 0, 0]} name="Stock Out" />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
@@ -175,7 +240,7 @@ export default function DashboardPage() {
             <CardDescription>The latest stock movements in your inventory.</CardDescription>
           </CardHeader>
           <CardContent>
-             {transactions.length > 0 ? (
+             {recentTransactions.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -185,7 +250,7 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((transaction) => (
+                  {recentTransactions.map((transaction) => (
                     <TableRow key={transaction.id}>
                       <TableCell>
                         <div className="font-medium">{transaction.itemName}</div>
@@ -220,4 +285,5 @@ export default function DashboardPage() {
       </div>
     </div>
   )
-}
+
+    
