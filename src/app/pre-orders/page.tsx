@@ -146,12 +146,7 @@ export default function PreOrdersPage() {
 
     try {
       const batch = writeBatch(db);
-      const approvalItems: PreOrder[] = [];
-
       itemsToApprove.forEach(order => {
-        const approvalItem = { ...order, status: 'Awaiting Approval' as const };
-        // Don't add to approvals collection, just update status
-        approvalItems.push(approvalItem);
         const orderRef = doc(db, 'pre-orders', order.id);
         batch.update(orderRef, { status: 'Awaiting Approval' });
       });

@@ -61,7 +61,6 @@ export default function ApprovalPage() {
           description: `The pre-order for ${originalOrder.itemName} has been ${decision}.`,
         });
 
-        // If no more items to approve, redirect back
         if (approvalItems.length - 1 === 0) {
             router.push('/pre-orders');
         }
