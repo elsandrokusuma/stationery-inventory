@@ -8,8 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function getGoogleDriveImageSrc(url: string | undefined | null): string {
   if (!url || !url.includes('drive.google.com')) {
     // Return a placeholder if the URL is empty or not a Google Drive link.
-    // Use a larger placeholder for the dialog.
-    return "https://placehold.co/600x400.png";
+    return "";
   }
 
   const regex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;

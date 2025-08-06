@@ -241,8 +241,11 @@ export default function InventoryPage() {
   );
 
   const handlePhotoClick = (photoUrl: string | undefined | null) => {
-    setPhotoToShow(getGoogleDriveImageSrc(photoUrl));
-    setPhotoOpen(true);
+    const imageUrl = getGoogleDriveImageSrc(photoUrl);
+    if (imageUrl) {
+        setPhotoToShow(imageUrl);
+        setPhotoOpen(true);
+    }
   };
 
 
@@ -311,7 +314,7 @@ export default function InventoryPage() {
                 </div>
                  <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
-                  <Input id="photoUrl" name="photoUrl" placeholder="https://example.com/photo.png" className="col-span-3" />
+                  <Input id="photoUrl" name="photoUrl" placeholder="https://drive.google.com/file/..." className="col-span-3" />
                 </div>
                 <DialogFooter>
                   <Button type="submit">Save Item</Button>
@@ -470,7 +473,7 @@ export default function InventoryPage() {
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
-              <Input id="photoUrl" name="photoUrl" placeholder="https://example.com/photo.png" className="col-span-3" defaultValue={selectedItem?.photoUrl || ''} />
+              <Input id="photoUrl" name="photoUrl" placeholder="https://drive.google.com/file/..." className="col-span-3" defaultValue={selectedItem?.photoUrl || ''} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">
