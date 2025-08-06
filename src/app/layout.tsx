@@ -1,8 +1,9 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 
 export const metadata: Metadata = {
@@ -26,7 +27,14 @@ export default function RootLayout({
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
-            <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+            <div className="p-4 sm:p-6 lg:p-8">
+              <div className="absolute top-4 left-4">
+                <SidebarTrigger />
+              </div>
+              <div className="mt-8">
+                {children}
+              </div>
+            </div>
           </SidebarInset>
           <Toaster />
         </SidebarProvider>
