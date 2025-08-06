@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Legend } from "recharts"
 import type { InventoryItem, Transaction, PreOrder } from "@/lib/types"
-import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ClipboardCheck } from "lucide-react"
+import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ClipboardCheck, PackageX } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -100,6 +100,7 @@ export default function DashboardPage() {
 
   const totalItems = inventoryItems.reduce((acc, item) => acc + item.quantity, 0);
   const lowStockItems = inventoryItems.filter(item => item.quantity <= 5 && item.quantity > 0).length;
+  const outOfStockItems = inventoryItems.filter(item => item.quantity === 0).length;
   const awaitingApprovalCount = preOrders.filter(order => order.status === "Awaiting Approval").length;
 
   const topItemsData = [...inventoryItems]
@@ -151,7 +152,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -175,6 +176,18 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold">{lowStockItems}</div>
             <p className="text-xs text-muted-foreground">
               Items with quantity 5 or less
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+            <PackageX className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{outOfStockItems}</div>
+            <p className="text-xs text-muted-foreground">
+              Items with zero quantity
             </p>
           </CardContent>
         </Card>
@@ -322,4 +335,5 @@ export default function DashboardPage() {
   )
 }
     
+
 
