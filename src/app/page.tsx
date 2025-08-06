@@ -70,7 +70,15 @@ export default function DashboardPage() {
         trans.push({ id: doc.id, ...doc.data() } as Transaction);
       });
       setTransactions(trans);
-      setRecentTransactions(trans.slice(0, 5));
+    });
+    
+    const qRecentTransactions = query(collection(db, "transactions"), orderBy("date", "desc"), limit(5));
+    const unsubscribeRecentTransactions = onSnapshot(qRecentTransactions, (querySnapshot) => {
+        const trans: Transaction[] = [];
+        querySnapshot.forEach((doc) => {
+            trans.push({ id: doc.id, ...doc.data() } as Transaction);
+        });
+        setRecentTransactions(trans);
     });
     
     const qPreOrders = query(collection(db, "pre-orders"), orderBy("orderDate", "desc"));
@@ -85,6 +93,7 @@ export default function DashboardPage() {
     return () => {
         unsubscribeInventory();
         unsubscribeTransactions();
+        unsubscribeRecentTransactions();
         unsubscribePreOrders();
     }
   }, []);
@@ -311,6 +320,6 @@ export default function DashboardPage() {
       </div>
     </div>
   )
-
+}
     
 
