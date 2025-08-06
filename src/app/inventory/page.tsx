@@ -150,7 +150,7 @@ export default function InventoryPage() {
     const updatedItemData = {
       name: formData.get("name") as string,
       unit: selectedUnit || selectedItem.unit,
-      photoUrl: formData.get("photoUrl") as string || undefined,
+      photoUrl: formData.get("photoUrl") as string || selectedItem.photoUrl,
       quantity: updatedQuantity,
     };
 
