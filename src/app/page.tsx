@@ -28,6 +28,7 @@ import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ClipboardCheck } fro
 import { useState, useEffect, useMemo } from "react"
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 const chartConfig = {
@@ -50,6 +51,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
+  const [selectedChartItem, setSelectedChartItem] = useState<string>("all");
 
   useEffect(() => {
     const qInventory = query(collection(db, "inventory"), orderBy("name"));
@@ -98,8 +100,12 @@ export default function DashboardPage() {
   const monthlyStockData = useMemo(() => {
     const data: { [key: string]: { month: string; stockIn: number; stockOut: number } } = {};
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    const filteredTransactions = selectedChartItem === 'all'
+      ? transactions
+      : transactions.filter(t => t.itemId === selectedChartItem);
 
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
       const date = new Date(t.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
       const monthLabel = `${monthNames[date.getMonth()]} '${String(date.getFullYear()).slice(2)}`;
@@ -120,7 +126,12 @@ export default function DashboardPage() {
         const bDate = new Date(b.month.split(" '")[0] + " 1, 20" + b.month.split(" '")[1]);
         return aDate.getTime() - bDate.getTime();
     }).slice(-6); // Get last 6 months
-  }, [transactions]);
+  }, [transactions, selectedChartItem]);
+  
+  const selectedItemName = selectedChartItem === 'all' 
+    ? 'All Items' 
+    : inventoryItems.find(item => item.id === selectedChartItem)?.name;
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -174,8 +185,23 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Stock Movement</CardTitle>
-          <CardDescription>A summary of stock in and stock out over the last 6 months.</CardDescription>
+            <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Monthly Stock Movement: {selectedItemName}</CardTitle>
+                  <CardDescription>A summary of stock in and stock out over the last 6 months.</CardDescription>
+                </div>
+                <Select value={selectedChartItem} onValueChange={setSelectedChartItem}>
+                    <SelectTrigger className="w-[250px]">
+                        <SelectValue placeholder="Select an item to view" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Items</SelectItem>
+                        {inventoryItems.map(item => (
+                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
