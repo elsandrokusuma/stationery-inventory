@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   collection,
   onSnapshot,
@@ -59,7 +59,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
-export default function PreOrdersPage() {
+function PreOrdersContent() {
   const [preOrders, setPreOrders] = React.useState<PreOrder[]>([]);
   const [inventoryItems, setInventoryItems] = React.useState<InventoryItem[]>([]);
   const [isCreateOpen, setCreateOpen] = React.useState(false);
@@ -68,7 +68,10 @@ export default function PreOrdersPage() {
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [dateFilter, setDateFilter] = React.useState<Date | undefined>(undefined);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedUnit, setSelectedUnit] = React.useState<string | undefined>();
+  const [defaultItemId, setDefaultItemId] = React.useState<string | undefined>();
+  
 
   React.useEffect(() => {
     const qPreOrders = query(collection(db, "pre-orders"), orderBy("orderDate", "desc"));
@@ -94,6 +97,19 @@ export default function PreOrdersPage() {
       unsubscribeInventory();
     };
   }, []);
+  
+  React.useEffect(() => {
+    const create = searchParams.get('create');
+    const itemId = searchParams.get('itemId');
+
+    if (create === 'true' && itemId) {
+        setDefaultItemId(itemId);
+        setCreateOpen(true);
+        // Clean up URL params
+        router.replace('/pre-orders', { scroll: false });
+    }
+  }, [searchParams, router]);
+
 
   const handleCreatePreOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -121,6 +137,7 @@ export default function PreOrdersPage() {
     });
     setCreateOpen(false);
     setSelectedUnit(undefined);
+    setDefaultItemId(undefined);
     (e.target as HTMLFormElement).reset();
   };
 
@@ -279,7 +296,7 @@ export default function PreOrdersPage() {
             <FileDown className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
-          <Dialog open={isCreateOpen} onOpenChange={setCreateOpen}>
+          <Dialog open={isCreateOpen} onOpenChange={(isOpen) => { setCreateOpen(isOpen); if(!isOpen) setDefaultItemId(undefined); }}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -296,7 +313,7 @@ export default function PreOrdersPage() {
               <form onSubmit={handleCreatePreOrder} className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="item" className="text-right">Item</Label>
-                  <Select name="item" required>
+                  <Select name="item" required defaultValue={defaultItemId}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select an item" />
                     </SelectTrigger>
@@ -422,4 +439,10 @@ export default function PreOrdersPage() {
   );
 }
 
-    
+export default function PreOrdersPage() {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <PreOrdersContent />
+        </React.Suspense>
+    )
+}

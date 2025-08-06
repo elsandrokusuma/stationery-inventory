@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   collection,
   onSnapshot,
@@ -63,6 +64,7 @@ import {
   Pencil,
   Camera,
   SwitchCamera,
+  ShoppingCart,
 } from "lucide-react";
 import type { InventoryItem, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -92,6 +94,7 @@ export default function InventoryPage() {
   const [selectedUnit, setSelectedUnit] = React.useState<string | undefined>();
   const [isPhotoOpen, setPhotoOpen] = React.useState(false);
   const [photoToShow, setPhotoToShow] = React.useState<string | null>(null);
+  const router = useRouter();
 
   // States for camera functionality
   const [isCameraOpen, setCameraOpen] = React.useState(false);
@@ -261,6 +264,10 @@ export default function InventoryPage() {
     setDeleteOpen(false);
     setSelectedItem(null);
   }
+
+  const handleCreatePreOrder = (item: InventoryItem) => {
+    router.push(`/pre-orders?create=true&itemId=${item.id}`);
+  };
 
   const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -498,6 +505,9 @@ export default function InventoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => handleCreatePreOrder(item)}>
+                        <ShoppingCart className="mr-2 h-4 w-4" /> Create Pre-Order
+                      </DropdownMenuItem>
                        <DropdownMenuItem
                         onSelect={() => {
                           setSelectedItem(item);
@@ -754,5 +764,3 @@ export default function InventoryPage() {
     </div>
   );
 }
-
-
