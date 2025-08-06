@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import {
   collection,
   onSnapshot,
@@ -60,6 +61,7 @@ import {
   Search,
   Edit,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import type { InventoryItem, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -80,6 +82,7 @@ export default function InventoryPage() {
   const [isStockInOpen, setStockInOpen] = React.useState(false);
   const [isStockOutOpen, setStockOutOpen] = React.useState(false);
   const [isEditOpen, setEditOpen] = React.useState(false);
+  const [isEditItemOpen, setEditItemOpen] = React.useState(false);
   const [isDeleteOpen, setDeleteOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<InventoryItem | null>(null);
   const { toast } = useToast();
@@ -113,6 +116,7 @@ export default function InventoryPage() {
       name: formData.get("name") as string,
       unit: selectedUnit || (formData.get("unit") as string),
       quantity: Number(formData.get("quantity")),
+      photoUrl: formData.get("photoUrl") as string || undefined,
     };
 
     const docRef = await addDoc(collection(db, "inventory"), newItemData);
@@ -132,6 +136,29 @@ export default function InventoryPage() {
     setAddOpen(false);
     setSelectedUnit(undefined);
     (e.target as HTMLFormElement).reset();
+  };
+  
+   const handleEditItem = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedItem) return;
+
+    const formData = new FormData(e.currentTarget);
+    const updatedItemData = {
+      name: formData.get("name") as string,
+      unit: selectedUnit || selectedItem.unit,
+      photoUrl: formData.get("photoUrl") as string || undefined,
+    };
+
+    const itemRef = doc(db, "inventory", selectedItem.id);
+    await updateDoc(itemRef, updatedItemData);
+
+    toast({
+      title: "Item Updated",
+      description: `${updatedItemData.name} has been updated.`,
+    });
+    setEditItemOpen(false);
+    setSelectedItem(null);
+    setSelectedUnit(undefined);
   };
 
   const handleStockUpdate = (type: "in" | "out") => async (e: React.FormEvent<HTMLFormElement>) => {
@@ -287,6 +314,10 @@ export default function InventoryPage() {
                   <Label htmlFor="quantity" className="text-right">Quantity</Label>
                   <Input id="quantity" name="quantity" type="number" className="col-span-3" required />
                 </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
+                  <Input id="photoUrl" name="photoUrl" placeholder="https://example.com/photo.png" className="col-span-3" />
+                </div>
                 <DialogFooter>
                   <Button type="submit">Save Item</Button>
                 </DialogFooter>
@@ -299,6 +330,7 @@ export default function InventoryPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Photo</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Unit</TableHead>
               <TableHead className="text-center">Status</TableHead>
@@ -311,6 +343,16 @@ export default function InventoryPage() {
           <TableBody>
             {filteredItems.map((item) => (
               <TableRow key={item.id}>
+                <TableCell>
+                   <Image
+                      alt={item.name}
+                      className="aspect-square rounded-md object-cover"
+                      height="64"
+                      src={item.photoUrl || "https://placehold.co/64x64.png"}
+                      width="64"
+                      data-ai-hint="product image"
+                    />
+                </TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.unit}</TableCell>
                 <TableCell className="text-center">
@@ -331,6 +373,14 @@ export default function InventoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                       <DropdownMenuItem
+                        onSelect={() => {
+                          setSelectedItem(item);
+                          setEditItemOpen(true);
+                        }}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" /> Edit Item
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => {
                           setSelectedItem(item);
@@ -374,6 +424,52 @@ export default function InventoryPage() {
           </TableBody>
         </Table>
       </Card>
+      
+      {/* Edit Item Dialog */}
+      <Dialog open={isEditItemOpen} onOpenChange={setEditItemOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Item: {selectedItem?.name}</DialogTitle>
+            <DialogDescription>
+             Update the details for this item.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditItem} className="grid gap-4 py-4">
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">Name</Label>
+              <Input id="name" name="name" className="col-span-3" defaultValue={selectedItem?.name} required />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="unit" className="text-right">Unit</Label>
+              <Select name="unit" defaultValue={selectedItem?.unit} onValueChange={setSelectedUnit}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pcs">Pcs</SelectItem>
+                  <SelectItem value="Pack">Pack</SelectItem>
+                  <SelectItem value="Box">Box</SelectItem>
+                  <SelectItem value="Roll">Roll</SelectItem>
+                  <SelectItem value="Rim">Rim</SelectItem>
+                  <SelectItem value="Tube">Tube</SelectItem>
+                  <SelectItem value="Bottle">Bottle</SelectItem>
+                  <SelectItem value="Can">Can</SelectItem>
+                  <SelectItem value="Sheet">Sheet</SelectItem>
+                  <SelectItem value="Cartridge">Cartridge</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
+              <Input id="photoUrl" name="photoUrl" placeholder="https://example.com/photo.png" className="col-span-3" defaultValue={selectedItem?.photoUrl} />
+            </div>
+            <DialogFooter>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Stock In Dialog */}
       <Dialog open={isStockInOpen} onOpenChange={setStockInOpen}>
