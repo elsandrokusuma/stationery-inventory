@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 
 export const metadata: Metadata = {
-  title: 'Stationery Inventory',
+  title: 'StockPilot',
   description: 'Comprehensive inventory and stock management ERP',
 };
 

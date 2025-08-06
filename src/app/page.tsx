@@ -89,7 +89,7 @@ export default function DashboardPage() {
       <header className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome to Stationery Inventory, your inventory command center.</p>
+          <p className="text-muted-foreground">Welcome to StockPilot, your inventory command center.</p>
         </div>
       </header>
 

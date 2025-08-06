@@ -22,12 +22,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import type { PreOrder } from "@/lib/types";
 import { Printer } from "lucide-react";
 
 
-export default function SuratJalanPage() {
+function SuratJalanContent() {
   const searchParams = useSearchParams();
   const [orders, setOrders] = React.useState<PreOrder[]>([]);
 
@@ -112,7 +111,7 @@ export default function SuratJalanPage() {
                     <p className="text-muted-foreground">Delivery Order</p>
                   </div>
                   <div className="text-right">
-                    <h3 className="font-bold text-lg">Stationery Inventory</h3>
+                    <h3 className="font-bold text-lg">StockPilot</h3>
                     <p className="text-sm text-muted-foreground">Jakarta, {today}</p>
                   </div>
               </div>
@@ -173,4 +172,13 @@ export default function SuratJalanPage() {
       </div>
     </div>
   );
+}
+
+
+export default function SuratJalanPage() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <SuratJalanContent />
+    </React.Suspense>
+  )
 }
