@@ -59,7 +59,6 @@ import {
   ArrowUpCircle,
   MoreHorizontal,
   Search,
-  Edit,
   Trash2,
   Pencil,
 } from "lucide-react";
@@ -81,7 +80,6 @@ export default function InventoryPage() {
   const [isAddOpen, setAddOpen] = React.useState(false);
   const [isStockInOpen, setStockInOpen] = React.useState(false);
   const [isStockOutOpen, setStockOutOpen] = React.useState(false);
-  const [isEditOpen, setEditOpen] = React.useState(false);
   const [isEditItemOpen, setEditItemOpen] = React.useState(false);
   const [isDeleteOpen, setDeleteOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<InventoryItem | null>(null);
@@ -145,14 +143,36 @@ export default function InventoryPage() {
     if (!selectedItem) return;
 
     const formData = new FormData(e.currentTarget);
+    const updatedQuantity = Number(formData.get("quantity"));
+    const originalQuantity = selectedItem.quantity;
+    
     const updatedItemData = {
       name: formData.get("name") as string,
       unit: selectedUnit || selectedItem.unit,
       photoUrl: formData.get("photoUrl") as string || undefined,
+      quantity: updatedQuantity,
     };
+
+    if (updatedQuantity < 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Quantity cannot be negative.",
+      });
+      return;
+    }
 
     const itemRef = doc(db, "inventory", selectedItem.id);
     await updateDoc(itemRef, updatedItemData);
+
+    if (originalQuantity !== updatedQuantity) {
+        addTransaction({
+          itemId: selectedItem.id,
+          itemName: updatedItemData.name,
+          type: 'edit',
+          quantity: updatedQuantity,
+        });
+    }
 
     toast({
       title: "Item Updated",
@@ -193,39 +213,6 @@ export default function InventoryPage() {
       
       if (type === 'in') setStockInOpen(false);
       else setStockOutOpen(false);
-  };
-
-  const handleEditQuantity = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!selectedItem) return;
-
-    const formData = new FormData(e.currentTarget);
-    const quantity = Number(formData.get("quantity"));
-
-    if (quantity < 0) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Quantity cannot be negative.",
-      });
-      return;
-    }
-
-    const itemRef = doc(db, "inventory", selectedItem.id);
-    await updateDoc(itemRef, { quantity });
-
-    addTransaction({
-      itemId: selectedItem.id,
-      itemName: selectedItem.name,
-      type: 'edit',
-      quantity: quantity,
-    });
-    
-    toast({
-      title: "Quantity Updated",
-      description: `Quantity for ${selectedItem.name} has been set to ${quantity}.`,
-    });
-    setEditOpen(false);
   };
 
   const handleDeleteItem = async () => {
@@ -388,7 +375,7 @@ export default function InventoryPage() {
                           setEditItemOpen(true);
                         }}
                       >
-                        <Pencil className="mr-2 h-4 w-4" /> Edit Item
+                        <Pencil className="mr-2 h-4 w-4" /> Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => {
@@ -405,15 +392,6 @@ export default function InventoryPage() {
                         }}
                       >
                         <ArrowUpCircle className="mr-2 h-4 w-4" /> Stock Out
-                      </DropdownMenuItem>
-                       <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          setSelectedItem(item);
-                          setEditOpen(true);
-                        }}
-                      >
-                        <Edit className="mr-2 h-4 w-4" /> Edit Quantity
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                        <DropdownMenuItem
@@ -437,6 +415,12 @@ export default function InventoryPage() {
       {/* Photo Viewer Dialog */}
       <Dialog open={isPhotoOpen} onOpenChange={setPhotoOpen}>
         <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Item Photo</DialogTitle>
+            <DialogDescription>
+              A larger view of the inventory item's photo.
+            </DialogDescription>
+          </DialogHeader>
           {photoToShow && (
             <Image
               src={photoToShow}
@@ -455,7 +439,7 @@ export default function InventoryPage() {
           <DialogHeader>
             <DialogTitle>Edit Item: {selectedItem?.name}</DialogTitle>
             <DialogDescription>
-             Update the details for this item.
+             Update the details for this item. Changes to quantity will be logged as a transaction.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditItem} className="grid gap-4 py-4">
@@ -486,6 +470,20 @@ export default function InventoryPage() {
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
               <Input id="photoUrl" name="photoUrl" placeholder="https://example.com/photo.png" className="col-span-3" defaultValue={selectedItem?.photoUrl} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quantity" className="text-right">
+                Quantity
+              </Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="number"
+                className="col-span-3"
+                defaultValue={selectedItem?.quantity}
+                required
+                min="0"
+              />
             </div>
             <DialogFooter>
               <Button type="submit">Save Changes</Button>
@@ -540,37 +538,6 @@ export default function InventoryPage() {
             </div>
             <DialogFooter>
               <Button type="submit">Remove Stock</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Quantity Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Quantity: {selectedItem?.name}</DialogTitle>
-            <DialogDescription>
-              Set the new total quantity for this item.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditQuantity} className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="quantity" className="text-right">
-                New Quantity
-              </Label>
-              <Input
-                id="quantity"
-                name="quantity"
-                type="number"
-                className="col-span-3"
-                defaultValue={selectedItem?.quantity}
-                required
-                min="0"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Save Quantity</Button>
             </DialogFooter>
           </form>
         </DialogContent>
