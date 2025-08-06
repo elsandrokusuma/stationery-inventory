@@ -60,10 +60,7 @@ export default function ApprovalPage() {
           title: `Pre-Order ${decision}`,
           description: `The pre-order for ${originalOrder.itemName} has been ${decision}.`,
         });
-
-        if (approvalItems.length - 1 === 0) {
-            router.push('/pre-orders');
-        }
+        router.push('/pre-orders');
     } catch(error) {
         console.error("Failed to update pre-order status", error);
         toast({
