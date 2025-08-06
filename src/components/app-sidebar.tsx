@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -33,7 +34,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader>
+      <SidebarHeader className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="shrink-0" asChild>
             <Link href="/" aria-label="Home">
@@ -42,6 +43,7 @@ export function AppSidebar() {
           </Button>
           <span className="font-semibold text-lg">Stationery Inventory</span>
         </div>
+        <SidebarTrigger />
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
