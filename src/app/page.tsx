@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import type { InventoryItem, Transaction, PreOrder } from "@/lib/types"
-import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ShoppingCart } from "lucide-react"
+import { AlertCircle, ArrowDownLeft, ArrowUpRight, Package, ClipboardCheck } from "lucide-react"
 import { useState, useEffect } from "react"
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
   const totalItems = inventoryItems.reduce((acc, item) => acc + item.quantity, 0);
   const lowStockItems = inventoryItems.filter(item => item.quantity <= 5 && item.quantity > 0).length;
-  const pendingPreOrders = preOrders.filter(order => order.status === "Pending").length;
+  const awaitingApprovalCount = preOrders.filter(order => order.status === "Awaiting Approval").length;
 
   const topItemsData = [...inventoryItems]
     .sort((a, b) => b.quantity - a.quantity)
@@ -122,13 +122,13 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Pre-Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Awaiting Approval</CardTitle>
+            <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{pendingPreOrders}</div>
+            <div className="text-2xl font-bold">+{awaitingApprovalCount}</div>
             <p className="text-xs text-muted-foreground">
-              Awaiting fulfillment
+              Pre-orders to be reviewed
             </p>
           </CardContent>
         </Card>
