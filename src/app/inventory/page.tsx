@@ -314,7 +314,7 @@ export default function InventoryPage() {
                 </div>
                  <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="photoUrl" className="text-right">Photo</Label>
-                  <Input id="photoUrl" name="photoUrl" placeholder="https://drive.google.com/file/..." className="col-span-3" />
+                  <Input id="photoUrl" name="photoUrl" type="file" className="col-span-3" accept="image/png, image/jpeg, image/gif" />
                 </div>
                 <DialogFooter>
                   <Button type="submit">Save Item</Button>
@@ -473,7 +473,7 @@ export default function InventoryPage() {
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="photoUrl" className="text-right">Photo</Label>
-              <Input id="photoUrl" name="photoUrl" placeholder="https://drive.google.com/file/..." className="col-span-3" defaultValue={selectedItem?.photoUrl || ''} />
+              <Input id="photoUrl" name="photoUrl" type="file" className="col-span-3" accept="image/png, image/jpeg, image/gif" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">
