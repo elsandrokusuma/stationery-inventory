@@ -7,7 +7,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getGoogleDriveImageSrc(url: string | undefined | null): string {
   if (!url || !url.includes('drive.google.com')) {
-    // Return an empty string if the URL is empty or not a Google Drive link.
     return "";
   }
 
@@ -19,6 +18,5 @@ export function getGoogleDriveImageSrc(url: string | undefined | null): string {
     return `https://drive.google.com/uc?id=${fileId}`;
   }
 
-  // Fallback for a GDrive link that doesn't match the expected format.
   return "";
 }
