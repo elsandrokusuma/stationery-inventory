@@ -313,7 +313,7 @@ export default function InventoryPage() {
                   <Input id="quantity" name="quantity" type="number" className="col-span-3" required />
                 </div>
                  <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
+                  <Label htmlFor="photoUrl" className="text-right">Document File JPG</Label>
                   <Input id="photoUrl" name="photoUrl" placeholder="https://drive.google.com/file/..." className="col-span-3" />
                 </div>
                 <DialogFooter>
@@ -472,7 +472,7 @@ export default function InventoryPage() {
               </Select>
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
+              <Label htmlFor="photoUrl" className="text-right">Document File JPG</Label>
               <Input id="photoUrl" name="photoUrl" placeholder="https://drive.google.com/file/..." className="col-span-3" defaultValue={selectedItem?.photoUrl || ''} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
