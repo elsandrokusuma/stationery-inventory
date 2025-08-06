@@ -737,14 +737,14 @@ export default function InventoryPage() {
                           <Button onClick={handleSavePhoto}>Save Photo</Button>
                       </>
                   ) : (
-                    <div className="flex justify-between w-full">
-                       <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture</Button>
-                       {videoDevices.length > 1 && (
-                         <Button variant="outline" size="icon" onClick={handleSwitchCamera} disabled={!hasCameraPermission}>
-                           <SwitchCamera className="h-4 w-4" />
-                           <span className="sr-only">Switch Camera</span>
-                         </Button>
-                       )}
+                    <div className="flex justify-center items-center w-full relative">
+                        <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture</Button>
+                        {videoDevices.length > 1 && (
+                          <Button variant="outline" size="icon" onClick={handleSwitchCamera} disabled={!hasCameraPermission} className="absolute right-0">
+                            <SwitchCamera className="h-4 w-4" />
+                            <span className="sr-only">Switch Camera</span>
+                          </Button>
+                        )}
                     </div>
                   )}
               </DialogFooter>
@@ -754,4 +754,5 @@ export default function InventoryPage() {
     </div>
   );
 }
+
 
