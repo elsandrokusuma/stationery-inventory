@@ -61,6 +61,7 @@ import {
   Search,
   Trash2,
   Pencil,
+  Camera,
 } from "lucide-react";
 import type { InventoryItem, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -74,6 +75,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
 import { getGoogleDriveImageSrc } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 export default function InventoryPage() {
   const [items, setItems] = React.useState<InventoryItem[]>([]);
@@ -89,6 +92,15 @@ export default function InventoryPage() {
   const [isPhotoOpen, setPhotoOpen] = React.useState(false);
   const [photoToShow, setPhotoToShow] = React.useState<string | null>(null);
 
+  // States for camera functionality
+  const [isCameraOpen, setCameraOpen] = React.useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = React.useState(true);
+  const [capturedImage, setCapturedImage] = React.useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = React.useState("");
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+
   React.useEffect(() => {
     const q = query(collection(db, "inventory"), orderBy("name"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -101,6 +113,15 @@ export default function InventoryPage() {
 
     return () => unsubscribe();
   }, []);
+  
+  React.useEffect(() => {
+    if(isEditItemOpen && selectedItem) {
+      setPhotoUrl(selectedItem.photoUrl || "");
+    } else {
+      setPhotoUrl("");
+    }
+  }, [isEditItemOpen, selectedItem]);
+  
 
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
     await addDoc(collection(db, "transactions"), {
@@ -117,7 +138,7 @@ export default function InventoryPage() {
       name: formData.get("name") as string,
       unit: selectedUnit || (formData.get("unit") as string),
       quantity: Number(formData.get("quantity")),
-      photoUrl: formData.get("photoUrl") as string || undefined,
+      photoUrl: photoUrl || undefined,
     };
 
     const docRef = await addDoc(collection(db, "inventory"), newItemData);
@@ -136,6 +157,7 @@ export default function InventoryPage() {
 
     setAddOpen(false);
     setSelectedUnit(undefined);
+    setPhotoUrl("");
     (e.target as HTMLFormElement).reset();
   };
   
@@ -150,7 +172,7 @@ export default function InventoryPage() {
     const updatedItemData = {
       name: formData.get("name") as string,
       unit: selectedUnit || selectedItem.unit,
-      photoUrl: formData.get("photoUrl") as string || selectedItem.photoUrl,
+      photoUrl: photoUrl || selectedItem.photoUrl,
       quantity: updatedQuantity,
     };
 
@@ -182,6 +204,7 @@ export default function InventoryPage() {
     setEditItemOpen(false);
     setSelectedItem(null);
     setSelectedUnit(undefined);
+    setPhotoUrl("");
   };
 
   const handleStockUpdate = (type: "in" | "out") => async (e: React.FormEvent<HTMLFormElement>) => {
@@ -239,12 +262,73 @@ export default function InventoryPage() {
   const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const getDisplayImage = (url: string | undefined | null) => {
+    if (!url) return "https://placehold.co/64x64.png";
+    if (url.startsWith("data:image")) return url;
+    return getGoogleDriveImageSrc(url) || "https://placehold.co/64x64.png";
+  };
+
 
   const handlePhotoClick = (photoUrl: string | undefined | null) => {
-    const imageUrl = getGoogleDriveImageSrc(photoUrl);
+    const imageUrl = getDisplayImage(photoUrl);
     if (imageUrl) {
         setPhotoToShow(imageUrl);
         setPhotoOpen(true);
+    }
+  };
+  
+  React.useEffect(() => {
+    const getCameraPermission = async () => {
+      if (!isCameraOpen) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        setHasCameraPermission(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
+        });
+      }
+    };
+
+    getCameraPermission();
+    
+    // Cleanup function to stop video stream
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isCameraOpen, toast]);
+
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUri = canvas.toDataURL('image/jpeg');
+        setCapturedImage(dataUri);
+      }
+    }
+  };
+  
+  const handleSavePhoto = () => {
+    if (capturedImage) {
+      setPhotoUrl(capturedImage);
+      setCameraOpen(false);
+      setCapturedImage(null);
     }
   };
 
@@ -269,7 +353,7 @@ export default function InventoryPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Dialog open={isAddOpen} onOpenChange={setAddOpen}>
+          <Dialog open={isAddOpen} onOpenChange={(isOpen) => { setAddOpen(isOpen); if (!isOpen) setPhotoUrl(""); }}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -314,7 +398,21 @@ export default function InventoryPage() {
                 </div>
                  <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="photoUrl" className="text-right">Photo</Label>
-                  <Input id="photoUrl" name="photoUrl" type="text" placeholder="https://drive.google.com/file/..." className="col-span-3" />
+                   <div className="col-span-3 flex items-center gap-2">
+                      <Input 
+                        id="photoUrl" 
+                        name="photoUrl" 
+                        type="text" 
+                        placeholder="Or paste https://drive.google.com/..." 
+                        className="flex-grow"
+                        value={photoUrl}
+                        onChange={(e) => setPhotoUrl(e.target.value)}
+                      />
+                      <Button type="button" size="icon" variant="outline" onClick={() => setCameraOpen(true)}>
+                        <Camera className="h-4 w-4" />
+                        <span className="sr-only">Take Photo</span>
+                      </Button>
+                   </div>
                 </div>
                 <DialogFooter>
                   <Button type="submit">Save Item</Button>
@@ -347,7 +445,7 @@ export default function InventoryPage() {
                         alt={item.name}
                         className="aspect-square rounded-md object-cover"
                         height="64"
-                        src={getGoogleDriveImageSrc(item.photoUrl) || "https://placehold.co/64x64.png"}
+                        src={getDisplayImage(item.photoUrl)}
                         width="64"
                         data-ai-hint="product image"
                       />
@@ -473,7 +571,21 @@ export default function InventoryPage() {
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="photoUrl" className="text-right">Photo</Label>
-              <Input id="photoUrl" name="photoUrl" type="text" placeholder="https://drive.google.com/file/..." className="col-span-3" defaultValue={selectedItem?.photoUrl} />
+              <div className="col-span-3 flex items-center gap-2">
+                <Input 
+                  id="photoUrl" 
+                  name="photoUrl" 
+                  type="text" 
+                  placeholder="Or paste https://drive.google.com/..." 
+                  className="flex-grow" 
+                  value={photoUrl}
+                  onChange={(e) => setPhotoUrl(e.target.value)}
+                />
+                 <Button type="button" size="icon" variant="outline" onClick={() => setCameraOpen(true)}>
+                    <Camera className="h-4 w-4" />
+                    <span className="sr-only">Take Photo</span>
+                  </Button>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">
@@ -566,6 +678,45 @@ export default function InventoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Camera Capture Dialog */}
+      <Dialog open={isCameraOpen} onOpenChange={(isOpen) => { setCameraOpen(isOpen); setCapturedImage(null); }}>
+          <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                  <DialogTitle>Take a Photo</DialogTitle>
+                  <DialogDescription>
+                      Point your camera at the item and click "Capture".
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-4">
+                  { !hasCameraPermission && (
+                      <Alert variant="destructive">
+                          <AlertTitle>Camera Access Required</AlertTitle>
+                          <AlertDescription>
+                              Please allow camera access in your browser to use this feature.
+                          </AlertDescription>
+                      </Alert>
+                  )}
+                  <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
+                      <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                      <canvas ref={canvasRef} className="hidden" />
+                      {capturedImage && <Image src={capturedImage} alt="Captured image" layout="fill" className="object-cover" />}
+                  </div>
+              </div>
+              <DialogFooter>
+                  {capturedImage ? (
+                      <>
+                          <Button variant="outline" onClick={() => setCapturedImage(null)}>Retake</Button>
+                          <Button onClick={handleSavePhoto}>Save Photo</Button>
+                      </>
+                  ) : (
+                      <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture</Button>
+                  )}
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+      
     </div>
   );
 }
+

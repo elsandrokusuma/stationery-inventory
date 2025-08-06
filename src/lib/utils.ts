@@ -9,8 +9,9 @@ export function getGoogleDriveImageSrc(url: string | undefined | null): string {
   if (!url || !url.includes('drive.google.com')) {
     return "";
   }
-
-  const regex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+  
+  // This handles both 'file/d/' and 'open?id=' style links
+  const regex = /drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/;
   const match = url.match(regex);
 
   if (match && match[1]) {
