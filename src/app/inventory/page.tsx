@@ -73,6 +73,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
+import { getGoogleDriveImageSrc } from "@/lib/utils";
 
 export default function InventoryPage() {
   const [items, setItems] = React.useState<InventoryItem[]>([]);
@@ -239,8 +240,8 @@ export default function InventoryPage() {
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handlePhotoClick = (photoUrl: string) => {
-    setPhotoToShow(photoUrl);
+  const handlePhotoClick = (photoUrl: string | undefined | null) => {
+    setPhotoToShow(getGoogleDriveImageSrc(photoUrl));
     setPhotoOpen(true);
   };
 
@@ -338,12 +339,12 @@ export default function InventoryPage() {
             {filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <div className="cursor-pointer" onClick={() => handlePhotoClick(item.photoUrl || "https://placehold.co/600x400.png")}>
+                  <div className="cursor-pointer" onClick={() => handlePhotoClick(item.photoUrl)}>
                      <Image
                         alt={item.name}
                         className="aspect-square rounded-md object-cover"
                         height="64"
-                        src={item.photoUrl || "https://placehold.co/64x64.png"}
+                        src={getGoogleDriveImageSrc(item.photoUrl) || "https://placehold.co/64x64.png"}
                         width="64"
                         data-ai-hint="product image"
                       />
@@ -469,7 +470,7 @@ export default function InventoryPage() {
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="photoUrl" className="text-right">Photo URL</Label>
-              <Input id="photoUrl" name="photoUrl" placeholder="https://example.com/photo.png" className="col-span-3" defaultValue={selectedItem?.photoUrl} />
+              <Input id="photoUrl" name="photoUrl" placeholder="https://example.com/photo.png" className="col-span-3" defaultValue={selectedItem?.photoUrl || ''} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">
