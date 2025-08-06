@@ -111,7 +111,7 @@ function SuratJalanContent() {
                     <p className="text-muted-foreground">Delivery Order</p>
                   </div>
                   <div className="text-right">
-                    <h3 className="font-bold text-lg">StockPilot</h3>
+                    <h3 className="font-bold text-lg">Stationery Inventory</h3>
                     <p className="text-sm text-muted-foreground">Jakarta, {today}</p>
                   </div>
               </div>
