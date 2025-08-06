@@ -87,6 +87,8 @@ export default function InventoryPage() {
   const [selectedItem, setSelectedItem] = React.useState<InventoryItem | null>(null);
   const { toast } = useToast();
   const [selectedUnit, setSelectedUnit] = React.useState<string | undefined>();
+  const [isPhotoOpen, setPhotoOpen] = React.useState(false);
+  const [photoToShow, setPhotoToShow] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const q = query(collection(db, "inventory"), orderBy("name"));
@@ -250,6 +252,11 @@ export default function InventoryPage() {
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handlePhotoClick = (photoUrl: string) => {
+    setPhotoToShow(photoUrl);
+    setPhotoOpen(true);
+  };
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -344,14 +351,16 @@ export default function InventoryPage() {
             {filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                   <Image
-                      alt={item.name}
-                      className="aspect-square rounded-md object-cover"
-                      height="64"
-                      src={item.photoUrl || "https://placehold.co/64x64.png"}
-                      width="64"
-                      data-ai-hint="product image"
-                    />
+                  <div className="cursor-pointer" onClick={() => handlePhotoClick(item.photoUrl || "https://placehold.co/600x400.png")}>
+                     <Image
+                        alt={item.name}
+                        className="aspect-square rounded-md object-cover"
+                        height="64"
+                        src={item.photoUrl || "https://placehold.co/64x64.png"}
+                        width="64"
+                        data-ai-hint="product image"
+                      />
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.unit}</TableCell>
@@ -424,6 +433,21 @@ export default function InventoryPage() {
           </TableBody>
         </Table>
       </Card>
+      
+      {/* Photo Viewer Dialog */}
+      <Dialog open={isPhotoOpen} onOpenChange={setPhotoOpen}>
+        <DialogContent className="max-w-xl">
+          {photoToShow && (
+            <Image
+              src={photoToShow}
+              alt="Enlarged inventory item"
+              width={600}
+              height={400}
+              className="rounded-lg object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Edit Item Dialog */}
       <Dialog open={isEditItemOpen} onOpenChange={setEditItemOpen}>
