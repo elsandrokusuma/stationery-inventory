@@ -62,6 +62,7 @@ import {
   Trash2,
   Pencil,
   Camera,
+  SwitchCamera,
 } from "lucide-react";
 import type { InventoryItem, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -99,6 +100,8 @@ export default function InventoryPage() {
   const [photoUrl, setPhotoUrl] = React.useState("");
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const [videoDevices, setVideoDevices] = React.useState<MediaDeviceInfo[]>([]);
+  const [currentDeviceId, setCurrentDeviceId] = React.useState<string | undefined>(undefined);
 
 
   React.useEffect(() => {
@@ -278,36 +281,52 @@ export default function InventoryPage() {
     }
   };
   
-  React.useEffect(() => {
-    const getCameraPermission = async () => {
-      if (!isCameraOpen) return;
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+  const stopVideoStream = React.useCallback(() => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+  }, []);
+  
+  const startVideoStream = React.useCallback(async (deviceId?: string) => {
+    stopVideoStream();
+    try {
+        const constraints = { video: { deviceId: deviceId ? { exact: deviceId } : undefined } };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         setHasCameraPermission(true);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this app.',
-        });
-      }
-    };
 
-    getCameraPermission();
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
+        setVideoDevices(videoInputDevices);
+
+        if(!deviceId && videoInputDevices.length > 0) {
+            setCurrentDeviceId(videoInputDevices[0].deviceId);
+        }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings to use this app.',
+      });
+    }
+  }, [stopVideoStream, toast]);
+  
+
+  React.useEffect(() => {
+    if (isCameraOpen) {
+      startVideoStream(currentDeviceId);
+    } else {
+      stopVideoStream();
+    }
     
-    // Cleanup function to stop video stream
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [isCameraOpen, toast]);
+    return () => stopVideoStream();
+  }, [isCameraOpen, currentDeviceId, startVideoStream, stopVideoStream]);
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -330,6 +349,14 @@ export default function InventoryPage() {
       setCameraOpen(false);
       setCapturedImage(null);
     }
+  };
+  
+  const handleSwitchCamera = () => {
+      if(videoDevices.length > 1) {
+          const currentIndex = videoDevices.findIndex(device => device.deviceId === currentDeviceId);
+          const nextIndex = (currentIndex + 1) % videoDevices.length;
+          setCurrentDeviceId(videoDevices[nextIndex].deviceId);
+      }
   };
 
 
@@ -710,7 +737,15 @@ export default function InventoryPage() {
                           <Button onClick={handleSavePhoto}>Save Photo</Button>
                       </>
                   ) : (
-                      <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture</Button>
+                    <div className="flex justify-between w-full">
+                       <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture</Button>
+                       {videoDevices.length > 1 && (
+                         <Button variant="outline" size="icon" onClick={handleSwitchCamera} disabled={!hasCameraPermission}>
+                           <SwitchCamera className="h-4 w-4" />
+                           <span className="sr-only">Switch Camera</span>
+                         </Button>
+                       )}
+                    </div>
                   )}
               </DialogFooter>
           </DialogContent>
