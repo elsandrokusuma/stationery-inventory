@@ -178,6 +178,7 @@ export default function PreOrdersPage() {
       });
       return;
     }
+    
     const selectedApprovedRows = preOrders.filter(order => selectedRows.includes(order.id) && order.status === 'Approved');
      if (selectedApprovedRows.length === 0) {
       toast({
@@ -420,3 +421,5 @@ export default function PreOrdersPage() {
     </div>
   );
 }
+
+    
