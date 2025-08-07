@@ -29,6 +29,7 @@ import { useState, useEffect, useMemo } from "react"
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 
 const chartConfig = {
@@ -52,6 +53,8 @@ export default function DashboardPage() {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
   const [selectedChartItem, setSelectedChartItem] = useState<string>("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isDetailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     const qInventory = query(collection(db, "inventory"), orderBy("name"));
@@ -97,6 +100,11 @@ export default function DashboardPage() {
         unsubscribePreOrders();
     }
   }, []);
+  
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setDetailsOpen(true);
+  };
 
   const totalItems = inventoryItems.reduce((acc, item) => acc + item.quantity, 0);
   const lowStockItems = inventoryItems.filter(item => item.quantity <= 5 && item.quantity > 0).length;
@@ -299,7 +307,7 @@ export default function DashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {recentTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
+                    <TableRow key={transaction.id} onClick={() => handleTransactionClick(transaction)} className="cursor-pointer">
                       <TableCell>
                         <div className="font-medium">{transaction.itemName}</div>
                         <div className="hidden text-sm text-muted-foreground md:inline">
@@ -331,9 +339,56 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+       <Dialog open={isDetailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+            <DialogDescription>
+              Detailed information about the stock movement.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="grid gap-4 py-4 text-sm">
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-muted-foreground">Item Name</span>
+                <span className="col-span-2">{selectedTransaction.itemName}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-muted-foreground">Quantity</span>
+                <span className="col-span-2">{selectedTransaction.quantity}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-muted-foreground">Date</span>
+                <span className="col-span-2">{new Date(selectedTransaction.date).toLocaleString()}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-muted-foreground">Type</span>
+                 <span className="col-span-2">
+                  <Badge
+                    variant={
+                      selectedTransaction.type === 'in' || selectedTransaction.type === 'add' ? 'default' :
+                      selectedTransaction.type === 'edit' ? 'secondary' :
+                      'destructive'
+                    }
+                  >
+                    {selectedTransaction.type.charAt(0).toUpperCase() + selectedTransaction.type.slice(1)}
+                  </Badge>
+                </span>
+              </div>
+              {selectedTransaction.person && (
+                 <div className="grid grid-cols-3 items-center gap-4">
+                  <span className="font-semibold text-muted-foreground">
+                    {selectedTransaction.type === 'in' ? 'From' : 'To'}
+                  </span>
+                  <span className="col-span-2">{selectedTransaction.person}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
     
-
-
