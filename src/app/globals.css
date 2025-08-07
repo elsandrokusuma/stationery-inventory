@@ -7,7 +7,7 @@
     --background: 222 47% 11%; /* Navy Blue */
     --foreground: 210 40% 98%; /* Light Gray */
 
-    --card: 222 47% 14%; /* Darker Navy */
+    --card: 25 95% 53%; /* Orange */
     --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 14%;
@@ -54,7 +54,7 @@
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 25 95% 53%;
     --card-foreground: 210 40% 98%;
 
     --popover: 222.2 84% 4.9%;
