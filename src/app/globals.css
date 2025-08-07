@@ -7,7 +7,7 @@
     --background: 180 41% 17%; /* #183D3D */
     --foreground: 180 15% 95%;
 
-    --card: 180 41% 22%;
+    --card: 202 70% 12%; /* #092635 */
     --card-foreground: 180 15% 95%;
 
     --popover: 180 41% 10%;
@@ -28,7 +28,7 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 180 15% 95%;
 
-    --border: 180 41% 22%;
+    --border: 202 70% 15%;
     --input: 180 41% 25%;
     --ring: 158 25% 70%;
 
@@ -54,7 +54,7 @@
     --background: 180 41% 17%; /* #183D3D */
     --foreground: 180 15% 95%;
 
-    --card: 180 41% 22%;
+    --card: 202 70% 12%; /* #092635 */
     --card-foreground: 180 15% 95%;
 
     --popover: 180 41% 10%;
@@ -75,7 +75,7 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 180 15% 95%;
 
-    --border: 180 41% 22%;
+    --border: 202 70% 15%;
     --input: 180 41% 25%;
     --ring: 158 25% 70%;
 
