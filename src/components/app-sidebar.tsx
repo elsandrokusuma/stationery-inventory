@@ -27,15 +27,19 @@ import {
   Settings,
   ClipboardCheck,
 } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function AppSidebar() {
   const pathname = usePathname()
   const { setOpen } = useSidebar()
+  const isMobile = useIsMobile()
   const isActive = (path: string) => pathname === path
 
   const handleLinkClick = () => {
-    // Collapse the sidebar on desktop when a link is clicked
-    setOpen(false)
+    // Collapse the sidebar when a link is clicked
+    if (!isMobile) {
+        setOpen(false)
+    }
   }
 
   return (
