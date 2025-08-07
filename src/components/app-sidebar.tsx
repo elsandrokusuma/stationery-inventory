@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -29,7 +30,13 @@ import {
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { setOpen } = useSidebar()
   const isActive = (path: string) => pathname === path
+
+  const handleLinkClick = () => {
+    // Collapse the sidebar on desktop when a link is clicked
+    setOpen(false)
+  }
 
   return (
     <Sidebar>
@@ -50,6 +57,7 @@ export function AppSidebar() {
               asChild
               isActive={isActive("/")}
               tooltip={{ children: "Dashboard" }}
+              onClick={handleLinkClick}
             >
               <Link href="/">
                 <LayoutDashboard />
@@ -62,6 +70,7 @@ export function AppSidebar() {
               asChild
               isActive={isActive("/inventory")}
               tooltip={{ children: "Inventory" }}
+              onClick={handleLinkClick}
             >
               <Link href="/inventory">
                 <Boxes />
@@ -74,6 +83,7 @@ export function AppSidebar() {
               asChild
               isActive={isActive("/pre-orders")}
               tooltip={{ children: "Pre-Orders" }}
+              onClick={handleLinkClick}
             >
               <Link href="/pre-orders">
                 <ShoppingCart />
@@ -86,6 +96,7 @@ export function AppSidebar() {
               asChild
               isActive={isActive("/approval")}
               tooltip={{ children: "Approval" }}
+              onClick={handleLinkClick}
             >
               <Link href="/approval">
                 <ClipboardCheck />
