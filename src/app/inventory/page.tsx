@@ -369,20 +369,20 @@ export default function InventoryPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-center justify-between gap-4">
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
           <p className="text-muted-foreground">
             Manage your products and their stock levels.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-           <div className="relative">
+        <div className="flex w-full md:w-auto items-center gap-2">
+           <div className="relative flex-grow">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search by item name..."
-              className="pl-8 sm:w-[300px]"
+              className="pl-8 w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -462,7 +462,7 @@ export default function InventoryPage() {
             <TableRow>
               <TableHead className="w-[80px]">Photo</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Unit</TableHead>
+              <TableHead className="hidden md:table-cell">Unit</TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
               <TableHead>
@@ -486,7 +486,7 @@ export default function InventoryPage() {
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.unit}</TableCell>
+                <TableCell className="hidden md:table-cell">{item.unit}</TableCell>
                 <TableCell className="text-center">
                   <Badge
                     variant={item.quantity > 5 ? "default" : item.quantity > 0 ? "warning" : "destructive"}

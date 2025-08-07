@@ -215,13 +215,13 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <CardTitle>Monthly Stock Movement: {selectedItemName}</CardTitle>
                   <CardDescription>A summary of stock in and stock out over the last 6 months.</CardDescription>
                 </div>
                 <Select value={selectedChartItem} onValueChange={setSelectedChartItem}>
-                    <SelectTrigger className="w-[250px]">
+                    <SelectTrigger className="w-full md:w-[250px]">
                         <SelectValue placeholder="Select an item to view" />
                     </SelectTrigger>
                     <SelectContent>
@@ -389,6 +389,6 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
     

@@ -28,10 +28,10 @@ export default function RootLayout({
           <AppSidebar />
           <SidebarInset>
             <div className="p-4 sm:p-6 lg:p-8">
-              <div className="absolute top-4 left-4">
+              <div className="absolute top-4 left-4 z-20">
                 <SidebarTrigger />
               </div>
-              <div className="mt-8">
+              <div className="mt-8 md:mt-0">
                 {children}
               </div>
             </div>

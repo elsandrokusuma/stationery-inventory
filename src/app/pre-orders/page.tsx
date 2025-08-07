@@ -267,16 +267,16 @@ function PreOrdersContent() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-center justify-between gap-4 flex-wrap">
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Pre-Orders</h1>
           <p className="text-muted-foreground">
             Track and manage your upcoming stock deliveries.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-col md:flex-row w-full md:w-auto items-center gap-2">
            <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -290,103 +290,108 @@ function PreOrdersContent() {
             </SelectContent>
           </Select>
 
-           <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className="w-[240px] justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFilter ? format(dateFilter, "PPP") : <span>Filter by date</span>}
+           <div className="flex w-full md:w-auto items-center gap-2">
+             <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className="w-full md:w-[240px] justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFilter ? format(dateFilter, "PPP") : <span>Filter by date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFilter}
+                  onSelect={setDateFilter}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {dateFilter && (
+              <Button variant="ghost" size="icon" onClick={() => setDateFilter(undefined)}>
+                <X className="h-4 w-4" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateFilter}
-                onSelect={setDateFilter}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          {dateFilter && (
-            <Button variant="ghost" size="icon" onClick={() => setDateFilter(undefined)}>
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+            )}
+           </div>
 
-          <Button onClick={handleRequestApproval} disabled={!canRequestApproval}>
-            <Send className="mr-2 h-4 w-4" />
-            Request Approval
-          </Button>
-           <Button onClick={handleExportPdf} disabled={!canExport}>
-            <FileDown className="mr-2 h-4 w-4" />
-            Export PDF
-          </Button>
-          <Dialog open={isCreateOpen} onOpenChange={(isOpen) => { setCreateOpen(isOpen); if(!isOpen) setDefaultItemId(undefined); }}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Pre-Order
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Pre-Order</DialogTitle>
-                <DialogDescription>
-                  Fill in the details for the new pre-order.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreatePreOrder} className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="item" className="text-right">Item</Label>
-                  <Select name="item" required defaultValue={defaultItemId}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select an item" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {inventoryItems.map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="unit" className="text-right">Unit</Label>
-                  <Select name="unit" required onValueChange={setSelectedUnit}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pcs">Pcs</SelectItem>
-                      <SelectItem value="Pack">Pack</SelectItem>
-                      <SelectItem value="Box">Box</SelectItem>
-                      <SelectItem value="Roll">Roll</SelectItem>
-                      <SelectItem value="Rim">Rim</SelectItem>
-                      <SelectItem value="Tube">Tube</SelectItem>
-                      <SelectItem value="Bottle">Bottle</SelectItem>
-                      <SelectItem value="Can">Can</SelectItem>
-                      <SelectItem value="Sheet">Sheet</SelectItem>
-                      <SelectItem value="Cartridge">Cartridge</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="quantity" className="text-right">Quantity</Label>
-                  <Input id="quantity" name="quantity" type="number" min="1" className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="expectedDate" className="text-right">Expected Date</Label>
-                  <Input id="expectedDate" name="expectedDate" type="date" className="col-span-3" required />
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Create Pre-Order</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex w-full md:w-auto items-center gap-2">
+            <Button onClick={handleRequestApproval} disabled={!canRequestApproval} className="w-full md:w-auto">
+              <Send className="mr-2 h-4 w-4" />
+              Request Approval
+            </Button>
+            <Button onClick={handleExportPdf} disabled={!canExport} className="w-full md:w-auto">
+              <FileDown className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Dialog open={isCreateOpen} onOpenChange={(isOpen) => { setCreateOpen(isOpen); if(!isOpen) setDefaultItemId(undefined); }}>
+              <DialogTrigger asChild>
+                <Button className="w-full md:w-auto">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Pre-Order
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Pre-Order</DialogTitle>
+                  <DialogDescription>
+                    Fill in the details for the new pre-order.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreatePreOrder} className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="item" className="text-right">Item</Label>
+                    <Select name="item" required defaultValue={defaultItemId}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select an item" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {inventoryItems.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="unit" className="text-right">Unit</Label>
+                    <Select name="unit" required onValueChange={setSelectedUnit}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pcs">Pcs</SelectItem>
+                        <SelectItem value="Pack">Pack</SelectItem>
+                        <SelectItem value="Box">Box</SelectItem>
+                        <SelectItem value="Roll">Roll</SelectItem>
+                        <SelectItem value="Rim">Rim</SelectItem>
+                        <SelectItem value="Tube">Tube</SelectItem>
+                        <SelectItem value="Bottle">Bottle</SelectItem>
+                        <SelectItem value="Can">Can</SelectItem>
+                        <SelectItem value="Sheet">Sheet</SelectItem>
+                        <SelectItem value="Cartridge">Cartridge</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="quantity" className="text-right">Quantity</Label>
+                    <Input id="quantity" name="quantity" type="number" min="1" className="col-span-3" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="expectedDate" className="text-right">Expected Date</Label>
+                    <Input id="expectedDate" name="expectedDate" type="date" className="col-span-3" required />
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit">Create Pre-Order</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
         </div>
       </header>
       <Card>
@@ -402,9 +407,9 @@ function PreOrdersContent() {
                   />
               </TableHead>
               <TableHead>Item Name</TableHead>
-              <TableHead>Unit</TableHead>
+              <TableHead className="hidden md:table-cell">Unit</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
-              <TableHead>Order Date</TableHead>
+              <TableHead className="hidden md:table-cell">Order Date</TableHead>
               <TableHead>Expected Date</TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead>
@@ -424,9 +429,9 @@ function PreOrdersContent() {
                     />
                 </TableCell>
                 <TableCell className="font-medium">{order.itemName}</TableCell>
-                <TableCell>{order.unit}</TableCell>
+                <TableCell className="hidden md:table-cell">{order.unit}</TableCell>
                 <TableCell className="text-right">{order.quantity}</TableCell>
-                <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                <TableCell className="hidden md:table-cell">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
                 <TableCell>{new Date(order.expectedDate).toLocaleDateString()}</TableCell>
                 <TableCell className="text-center">
                   <Badge
