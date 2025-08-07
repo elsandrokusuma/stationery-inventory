@@ -31,14 +31,15 @@ import { useIsMobile } from "@/hooks/use-mobile"
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { setOpen } = useSidebar()
+  const { setOpen, setOpenMobile } = useSidebar()
   const isMobile = useIsMobile()
   const isActive = (path: string) => pathname === path
 
   const handleLinkClick = () => {
-    // Collapse the sidebar when a link is clicked
-    if (!isMobile) {
-        setOpen(false)
+    if (isMobile) {
+      setOpenMobile(false)
+    } else {
+      setOpen(false)
     }
   }
 
