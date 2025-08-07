@@ -351,16 +351,16 @@ export default function DashboardPage() {
           {selectedTransaction && (
             <div className="grid gap-4 py-4 text-sm">
               <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-muted-foreground">Date</span>
+                <span className="col-span-2">{new Date(selectedTransaction.date).toLocaleString()}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
                 <span className="font-semibold text-muted-foreground">Item Name</span>
                 <span className="col-span-2">{selectedTransaction.itemName}</span>
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
                 <span className="font-semibold text-muted-foreground">Quantity</span>
                 <span className="col-span-2">{selectedTransaction.quantity}</span>
-              </div>
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="font-semibold text-muted-foreground">Date</span>
-                <span className="col-span-2">{new Date(selectedTransaction.date).toLocaleString()}</span>
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
                 <span className="font-semibold text-muted-foreground">Type</span>
@@ -379,7 +379,7 @@ export default function DashboardPage() {
               {selectedTransaction.person && (
                  <div className="grid grid-cols-3 items-center gap-4">
                   <span className="font-semibold text-muted-foreground">
-                    {selectedTransaction.type === 'in' ? 'From' : 'To'}
+                    {selectedTransaction.type === 'in' || selectedTransaction.type === 'add' ? 'From' : 'To'}
                   </span>
                   <span className="col-span-2">{selectedTransaction.person}</span>
                 </div>
