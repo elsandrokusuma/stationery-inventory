@@ -11,7 +11,8 @@ import {
   doc,
   writeBatch,
   query,
-  orderBy
+  orderBy,
+  deleteDoc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -34,6 +35,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -43,7 +54,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, MoreHorizontal, Send, Calendar as CalendarIcon, X, FileDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Send, Calendar as CalendarIcon, X, FileDown, Trash2 } from "lucide-react";
 import type { PreOrder, InventoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -51,6 +62,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
@@ -63,6 +75,8 @@ function PreOrdersContent() {
   const [preOrders, setPreOrders] = React.useState<PreOrder[]>([]);
   const [inventoryItems, setInventoryItems] = React.useState<InventoryItem[]>([]);
   const [isCreateOpen, setCreateOpen] = React.useState(false);
+  const [isDeleteOpen, setDeleteOpen] = React.useState(false);
+  const [selectedOrder, setSelectedOrder] = React.useState<PreOrder | null>(null);
   const { toast } = useToast();
   const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
@@ -140,6 +154,19 @@ function PreOrdersContent() {
     setDefaultItemId(undefined);
     (e.target as HTMLFormElement).reset();
   };
+  
+  const handleDeletePreOrder = async () => {
+    if (!selectedOrder) return;
+
+    await deleteDoc(doc(db, "pre-orders", selectedOrder.id));
+
+    toast({
+        title: "Pre-Order Deleted",
+        description: `The pre-order for ${selectedOrder.itemName} has been removed.`
+    });
+    setDeleteOpen(false);
+    setSelectedOrder(null);
+  }
 
   const updateStatus = async (id: string, status: PreOrder['status']) => {
     const orderRef = doc(db, "pre-orders", id);
@@ -418,15 +445,29 @@ function PreOrdersContent() {
                 <TableCell>
                    <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost" disabled={order.status !== 'Approved'}>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Toggle menu</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => updateStatus(order.id, 'Fulfilled')}>Mark as Fulfilled</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => updateStatus(order.id, 'Cancelled')}>Mark as Cancelled</DropdownMenuItem>
+                      {order.status === 'Approved' && (
+                        <>
+                          <DropdownMenuItem onSelect={() => updateStatus(order.id, 'Fulfilled')}>Mark as Fulfilled</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => updateStatus(order.id, 'Cancelled')}>Mark as Cancelled</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-700"
+                        onSelect={() => {
+                          setSelectedOrder(order);
+                          setDeleteOpen(true);
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -435,6 +476,25 @@ function PreOrdersContent() {
           </TableBody>
         </Table>
       </Card>
+      
+       {/* Delete Confirmation Dialog */}
+       <AlertDialog open={isDeleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the pre-order for
+              <span className="font-semibold"> {selectedOrder?.itemName}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedOrder(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePreOrder}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
