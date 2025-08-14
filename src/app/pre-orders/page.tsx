@@ -295,7 +295,7 @@ function PreOrdersContent() {
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
-                  className="w-full md:w-[240px] justify-start text-left font-normal"
+                  className="w-full md:w-auto justify-start text-left font-normal"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateFilter ? format(dateFilter, "PPP") : <span>Filter by date</span>}
@@ -369,7 +369,7 @@ function PreOrdersContent() {
                         <SelectItem value="Roll">Roll</SelectItem>
                         <SelectItem value="Rim">Rim</SelectItem>
                         <SelectItem value="Tube">Tube</SelectItem>
-                        <SelectItem value="Bottle">Bottle</SelectItem>
+                        <SelectItem value="Bottle">Bottle</Bottle>
                         <SelectItem value="Can">Can</SelectItem>
                         <SelectItem value="Sheet">Sheet</SelectItem>
                         <SelectItem value="Cartridge">Cartridge</SelectItem>
@@ -398,7 +398,7 @@ function PreOrdersContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead padding="checkbox">
+              <TableHead padding="checkbox" className="hidden sm:table-cell">
                  <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -409,8 +409,8 @@ function PreOrdersContent() {
               <TableHead>Item Name</TableHead>
               <TableHead className="hidden md:table-cell">Unit</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
-              <TableHead className="hidden md:table-cell">Order Date</TableHead>
-              <TableHead>Expected Date</TableHead>
+              <TableHead className="hidden lg:table-cell">Order Date</TableHead>
+              <TableHead className="hidden sm:table-cell">Expected Date</TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -420,7 +420,7 @@ function PreOrdersContent() {
           <TableBody>
             {filteredPreOrders.map((order) => (
               <TableRow key={order.id} data-state={selectedRows.includes(order.id) && "selected"}>
-                <TableCell padding="checkbox">
+                <TableCell padding="checkbox" className="hidden sm:table-cell">
                   <Checkbox
                       checked={selectedRows.includes(order.id)}
                       onCheckedChange={() => handleSelectRow(order.id)}
@@ -431,8 +431,8 @@ function PreOrdersContent() {
                 <TableCell className="font-medium">{order.itemName}</TableCell>
                 <TableCell className="hidden md:table-cell">{order.unit}</TableCell>
                 <TableCell className="text-right">{order.quantity}</TableCell>
-                <TableCell className="hidden md:table-cell">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(order.expectedDate).toLocaleDateString()}</TableCell>
+                <TableCell className="hidden lg:table-cell">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                <TableCell className="hidden sm:table-cell">{new Date(order.expectedDate).toLocaleDateString()}</TableCell>
                 <TableCell className="text-center">
                   <Badge
                     variant={
@@ -511,3 +511,4 @@ export default function PreOrdersPage() {
         </React.Suspense>
     )
 }
+

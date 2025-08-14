@@ -376,8 +376,8 @@ export default function InventoryPage() {
             Manage your products and their stock levels.
           </p>
         </div>
-        <div className="flex w-full md:w-auto items-center gap-2">
-           <div className="relative flex-grow">
+        <div className="flex flex-col md:flex-row w-full md:w-auto items-center gap-2">
+           <div className="relative flex-grow w-full">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -389,7 +389,7 @@ export default function InventoryPage() {
           </div>
           <Dialog open={isAddOpen} onOpenChange={(isOpen) => { setAddOpen(isOpen); if (!isOpen) setPhotoUrl(""); }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Item
               </Button>
@@ -460,7 +460,7 @@ export default function InventoryPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Photo</TableHead>
+              <TableHead className="w-[80px] hidden sm:table-cell">Photo</TableHead>
               <TableHead>Name</TableHead>
               <TableHead className="hidden md:table-cell">Unit</TableHead>
               <TableHead className="text-center">Status</TableHead>
@@ -473,7 +473,7 @@ export default function InventoryPage() {
           <TableBody>
             {filteredItems.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <div className="cursor-pointer" onClick={() => handlePhotoClick(item.photoUrl)}>
                      <Image
                         alt={item.name}
@@ -764,3 +764,4 @@ export default function InventoryPage() {
     </div>
   );
 }
+

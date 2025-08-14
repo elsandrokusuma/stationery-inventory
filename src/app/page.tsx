@@ -161,7 +161,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card onClick={() => router.push('/inventory')} className="cursor-pointer hover:bg-card/90 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -214,84 +214,84 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <CardTitle>Monthly Stock Movement: {selectedItemName}</CardTitle>
-                  <CardDescription>A summary of stock in and stock out over the last 6 months.</CardDescription>
+      <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                      <CardTitle>Monthly Stock Movement: {selectedItemName}</CardTitle>
+                      <CardDescription>A summary of stock in and stock out over the last 6 months.</CardDescription>
+                    </div>
+                    <Select value={selectedChartItem} onValueChange={setSelectedChartItem}>
+                        <SelectTrigger className="w-full md:w-[250px]">
+                            <SelectValue placeholder="Select an item to view" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Items</SelectItem>
+                            {inventoryItems.map(item => (
+                                <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
-                <Select value={selectedChartItem} onValueChange={setSelectedChartItem}>
-                    <SelectTrigger className="w-full md:w-[250px]">
-                        <SelectValue placeholder="Select an item to view" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Items</SelectItem>
-                        {inventoryItems.map(item => (
-                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
-            <BarChart accessibilityLayer data={monthlyStockData}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={(value) => value}
-              />
-               <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Legend />
-              <Bar dataKey="stockIn" fill="var(--color-stockIn)" radius={[4, 4, 0, 0]} name="Stock In" />
-              <Bar dataKey="stockOut" fill="var(--color-stockOut)" radius={[4, 4, 0, 0]} name="Stock Out" />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <BarChart accessibilityLayer data={monthlyStockData}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    tickFormatter={(value) => value}
+                  />
+                   <YAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend />
+                  <Bar dataKey="stockIn" fill="var(--color-stockIn)" radius={[4, 4, 0, 0]} name="Stock In" />
+                  <Bar dataKey="stockOut" fill="var(--color-stockOut)" radius={[4, 4, 0, 0]} name="Stock Out" />
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+           <Card>
+              <CardHeader>
+                <CardTitle>Top 5 Items by Stock Level</CardTitle>
+                <CardDescription>A snapshot of your most abundant items.</CardDescription>
+              </CardHeader>
+              <CardContent className="pl-2">
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <BarChart
+                    accessibilityLayer
+                    data={topItemsData}
+                    layout="vertical"
+                    margin={{ left: 10, right: 10 }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      tickLine={false}
+                      tickMargin={10}
+                      axisLine={false}
+                      tickFormatter={(value) => value.slice(0, 15) + (value.length > 15 ? '...' : '')}
+                      className="text-xs"
+                    />
+                    <XAxis dataKey="quantity" type="number" hide />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                    />
+                    <Bar dataKey="quantity" fill="var(--color-quantity)" radius={5} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+      </div>
 
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Top 5 Items by Stock Level</CardTitle>
-            <CardDescription>A snapshot of your most abundant items.</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart
-                accessibilityLayer
-                data={topItemsData}
-                layout="vertical"
-                margin={{ left: 10, right: 10 }}
-              >
-                <CartesianGrid horizontal={false} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                  tickFormatter={(value) => value.slice(0, 15) + (value.length > 15 ? '...' : '')}
-                  className="text-xs"
-                />
-                <XAxis dataKey="quantity" type="number" hide />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Bar dataKey="quantity" fill="var(--color-quantity)" radius={5} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-3">
+      <Card>
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
             <CardDescription>The latest stock movements in your inventory.</CardDescription>
@@ -303,7 +303,7 @@ export default function DashboardPage() {
                   <TableRow>
                     <TableHead>Item</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Type</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">Type</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -311,12 +311,12 @@ export default function DashboardPage() {
                     <TableRow key={transaction.id} onClick={() => handleTransactionClick(transaction)} className="cursor-pointer">
                       <TableCell>
                         <div className="font-medium">{transaction.itemName}</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
+                        <div className="text-sm text-muted-foreground">
                           {new Date(transaction.date).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">{transaction.quantity}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right hidden sm:table-cell">
                         <Badge
                           variant={
                             transaction.type === 'in' || transaction.type === 'add' ? 'default' :
@@ -339,7 +339,7 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+    
 
        <Dialog open={isDetailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent>
@@ -393,3 +393,4 @@ export default function DashboardPage() {
   );
 }
     
+
