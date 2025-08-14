@@ -369,7 +369,7 @@ function PreOrdersContent() {
                         <SelectItem value="Roll">Roll</SelectItem>
                         <SelectItem value="Rim">Rim</SelectItem>
                         <SelectItem value="Tube">Tube</SelectItem>
-                        <SelectItem value="Bottle">Bottle</Bottle>
+                        <SelectItem value="Bottle">Bottle</SelectItem>
                         <SelectItem value="Can">Can</SelectItem>
                         <SelectItem value="Sheet">Sheet</SelectItem>
                         <SelectItem value="Cartridge">Cartridge</SelectItem>
@@ -512,3 +512,4 @@ export default function PreOrdersPage() {
     )
 }
 
+    
