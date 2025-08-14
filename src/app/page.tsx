@@ -1,5 +1,4 @@
 
-      
 "use client"
 import {
   Card,
@@ -30,6 +29,7 @@ import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestor
 import { db } from "@/lib/firebase";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
 
 
 const chartConfig = {
@@ -55,6 +55,7 @@ export default function DashboardPage() {
   const [selectedChartItem, setSelectedChartItem] = useState<string>("all");
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailsOpen, setDetailsOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const qInventory = query(collection(db, "inventory"), orderBy("name"));
@@ -161,7 +162,7 @@ export default function DashboardPage() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card onClick={() => router.push('/inventory')} className="cursor-pointer hover:bg-card/90 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Items
