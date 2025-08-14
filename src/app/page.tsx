@@ -200,7 +200,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card onClick={() => router.push('/approval')} className="cursor-pointer hover:bg-card/90 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Awaiting Approval</CardTitle>
             <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
